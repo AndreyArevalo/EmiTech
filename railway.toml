@@ -1,0 +1,24 @@
+[build]
+builder = "nixpacks"
+
+[[services]]
+name = "api"
+source = "apps/api"
+
+[services.build]
+buildCommand = "npm install && npm run build"
+
+[services.deploy]
+startCommand = "node dist/server.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+
+[[services]]
+name = "web"
+source = "apps/web"
+
+[services.build]
+buildCommand = "npm install && npm run build"
+
+[services.deploy]
+startCommand = "npm run start"

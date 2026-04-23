@@ -1,0 +1,69 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose.prod.yml — EmiTech producción (DigitalOcean)
+# Uso: docker compose -f docker-compose.prod.yml up -d --build
+# ─────────────────────────────────────────────────────────────────────────────
+version: "3.9"
+
+services:
+
+  # ── Base de datos ────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${POSTGRES_DB:-emitech}
+      POSTGRES_USER:     ${POSTGRES_USER:-emitech}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Solo accesible internamente (no exponer a internet)
+
+  # ── Cache / Colas ────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  # ── API Fastify ───────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV:                  production
+      DATABASE_URL:              postgresql://${POSTGRES_USER:-emitech}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-emitech}
+      REDIS_URL:                 redis://redis:6379
+      JWT_SECRET:                ${JWT_SECRET}
+      META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN}
+      META_APP_SECRET:           ${META_APP_SECRET}
+      OPENROUTER_API_KEY:        ${OPENROUTER_API_KEY}
+      WOMPI_PUBLIC_KEY:          ${WOMPI_PUBLIC_KEY}
+      WOMPI_EVENTS_SECRET:       ${WOMPI_EVENTS_SECRET}
+      WEB_URL:                   ${WEB_URL}
+    depends_on:
+      - postgres
+      - redis
+
+  # ── Panel Web Next.js ─────────────────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    restart: unless-stopped
+    ports:
+      - "80:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:
+  redis_data:

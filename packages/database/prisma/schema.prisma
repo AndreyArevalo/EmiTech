@@ -1,0 +1,289 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// EmiTech — Schema Prisma (PostgreSQL multi-tenant)
+// Cada "tenant" es un salón de belleza suscrito al SaaS
+// ─────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── PLANES DE SUSCRIPCIÓN ────────────────────────────────────────────────────
+model Plan {
+  id          String   @id @default(cuid())
+  name        String   // "Básico", "Pro", "Empresarial"
+  slug        String   @unique // "basic", "pro", "enterprise"
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("COP")
+  maxStaff    Int      @default(2)
+  maxServices Int      @default(10)
+  features    Json     @default("[]") // lista de features incluidas
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  subscriptions Subscription[]
+}
+
+// ─── TENANTS (SALONES) ────────────────────────────────────────────────────────
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String                         // "Geminis Salón"
+  slug        String   @unique               // "geminis" → geminis.emitech.co
+  phone       String?                        // teléfono del salón
+  address     String?
+  city        String?
+  logoUrl     String?
+  active      Boolean  @default(true)
+  timezone    String   @default("America/Bogota")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // WhatsApp
+  waPhoneNumberId  String? // Meta: phone_number_id del salón
+  waAccessToken    String? // Meta: token de acceso (encriptado)
+  waBusinessId     String?
+
+  // Configuración del bot
+  botConfig   BotConfig?
+
+  // Relaciones
+  users         User[]
+  services      Service[]
+  staff         Staff[]
+  clients       Client[]
+  appointments  Appointment[]
+  conversations Conversation[]
+  subscription  Subscription?
+  workingHours  WorkingHours[]
+}
+
+// ─── CONFIGURACIÓN DEL BOT POR SALÓN ─────────────────────────────────────────
+model BotConfig {
+  id                String  @id @default(cuid())
+  tenantId          String  @unique
+  tenant            Tenant  @relation(fields: [tenantId], references: [id])
+
+  welcomeMessage    String  @default("Hola. Bienvenida/o. Que servicio deseas agendar?")
+  closedMessage     String  @default("En este momento no estamos disponibles. Te escribimos pronto.")
+  confirmMessage    String  @default("Tu cita ha sido registrada. En breve la confirmamos.")
+  reminderMessage   String  @default("Hola {nombre}, te recordamos tu cita hoy a las {hora} para {servicio}. Te esperamos.")
+  isOpen            Boolean @default(true)
+  requiresConfirm   Boolean @default(true)  // admin confirma manualmente o auto
+  reminderHoursBefore Int   @default(2)     // horas antes del reminder
+}
+
+// ─── USUARIOS ADMIN ───────────────────────────────────────────────────────────
+model User {
+  id           String    @id @default(cuid())
+  tenantId     String
+  tenant       Tenant    @relation(fields: [tenantId], references: [id])
+  email        String
+  passwordHash String
+  name         String
+  role         UserRole  @default(STAFF)
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+}
+
+enum UserRole {
+  OWNER      // dueño del salón
+  ADMIN      // administradora
+  STAFF      // solo ver sus citas
+  SUPERADMIN // EmiTech admin
+}
+
+// ─── SERVICIOS (CONFIGURABLES POR SALÓN) ─────────────────────────────────────
+model Service {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  name        String                    // "Laminado de Cejas"
+  description String?
+  duration    Int      @default(60)    // minutos
+  price       Decimal  @db.Decimal(10, 2)
+  currency    String   @default("COP")
+  active      Boolean  @default(true)
+  order       Int      @default(0)    // orden en el menú del bot
+  emoji       String?  @default("💅")
+  createdAt   DateTime @default(now())
+
+  appointments Appointment[]
+  staffServices StaffService[]
+
+  @@index([tenantId])
+}
+
+// ─── EMPLEADOS / ESTILISTAS ───────────────────────────────────────────────────
+model Staff {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  name        String
+  phone       String?
+  avatarUrl   String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  appointments  Appointment[]
+  workingHours  WorkingHours[]
+  staffServices StaffService[]
+
+  @@index([tenantId])
+}
+
+// Qué servicios puede hacer cada estilista
+model StaffService {
+  staffId   String
+  serviceId String
+  staff     Staff   @relation(fields: [staffId], references: [id])
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  @@id([staffId, serviceId])
+}
+
+// ─── HORARIOS DE TRABAJO ──────────────────────────────────────────────────────
+model WorkingHours {
+  id        String  @id @default(cuid())
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id])
+  staffId   String?
+  staff     Staff?  @relation(fields: [staffId], references: [id])
+  dayOfWeek  Int     // 0=Dom, 1=Lun, ..., 6=Sab
+  openTime   String  // "08:00"
+  closeTime  String  // "18:00"
+  slotMins   Int     @default(30) // granularidad del calendario en minutos
+  breakStart String? // "12:00" — inicio del descanso (opcional)
+  breakEnd   String? // "14:00" — fin del descanso (opcional)
+  isOpen     Boolean @default(true)
+
+  @@index([tenantId])
+  @@index([staffId])
+}
+
+// ─── CLIENTES DEL SALÓN ───────────────────────────────────────────────────────
+model Client {
+  id           String   @id @default(cuid())
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id])
+  phone        String                     // número WhatsApp internacional
+  waId         String?                    // jid de WhatsApp
+  name         String?
+  totalVisits  Int      @default(0)
+  lastVisit    DateTime?
+  notes        String?
+  createdAt    DateTime @default(now())
+
+  appointments  Appointment[]
+  conversations Conversation[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+}
+
+// ─── CITAS ────────────────────────────────────────────────────────────────────
+model Appointment {
+  id          String            @id @default(cuid())
+  tenantId    String
+  tenant      Tenant            @relation(fields: [tenantId], references: [id])
+  clientId    String
+  client      Client            @relation(fields: [clientId], references: [id])
+  serviceId   String
+  service     Service           @relation(fields: [serviceId], references: [id])
+  staffId     String?
+  staff       Staff?            @relation(fields: [staffId], references: [id])
+
+  date        String            // "2026-04-25" (ISO date)
+  time        String            // "10:00" (24h)
+  duration    Int               // minutos
+  status      AppointmentStatus @default(PENDING)
+  notes       String?
+
+  reminderSent  Boolean  @default(false)
+  confirmedAt   DateTime?
+  cancelledAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, date])
+  @@index([clientId])
+}
+
+enum AppointmentStatus {
+  PENDING    // esperando confirmación del admin
+  CONFIRMED  // confirmada
+  CANCELLED  // cancelada por cliente o admin
+  COMPLETED  // atendida
+  NO_SHOW    // no se presentó
+}
+
+// ─── CONVERSACIONES WHATSAPP ──────────────────────────────────────────────────
+model Conversation {
+  id         String           @id @default(cuid())
+  tenantId   String
+  tenant     Tenant           @relation(fields: [tenantId], references: [id])
+  clientId   String
+  client     Client           @relation(fields: [clientId], references: [id])
+  phone      String
+  step       String           @default("inicio")  // paso actual del flujo
+  data       Json             @default("{}")       // datos parciales de la cita
+  active     Boolean          @default(true)
+  humanMode  Boolean          @default(false)      // admin tomó control
+  updatedAt  DateTime         @updatedAt
+  createdAt  DateTime         @default(now())
+
+  messages   Message[]
+
+  @@unique([tenantId, phone])
+  @@index([tenantId])
+}
+
+// ─── MENSAJES (historial) ─────────────────────────────────────────────────────
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  direction      Direction    // IN | OUT
+  content        String
+  waMessageId    String?      // ID del mensaje en Meta
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId])
+}
+
+enum Direction {
+  IN   // cliente → bot
+  OUT  // bot → cliente
+}
+
+// ─── SUSCRIPCIONES ────────────────────────────────────────────────────────────
+model Subscription {
+  id           String             @id @default(cuid())
+  tenantId     String             @unique
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  planId       String
+  plan         Plan               @relation(fields: [planId], references: [id])
+  status       SubscriptionStatus @default(TRIAL)
+  trialEndsAt  DateTime?
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  mpSubscriptionId   String?      // ID en MercadoPago
+  wompiSubId         String?      // ID en Wompi
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+enum SubscriptionStatus {
+  TRIAL
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  SUSPENDED
+}
