@@ -4,6 +4,9 @@
 # ─────────────────────────────────────────────────────────────────────────────
 FROM node:20-alpine
 
+# Prisma necesita OpenSSL en Alpine
+RUN apk add --no-cache openssl
+
 RUN npm install -g pnpm
 
 WORKDIR /app
