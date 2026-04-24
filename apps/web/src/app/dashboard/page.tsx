@@ -33,12 +33,36 @@ export default function DashboardPage() {
 
   const todayStr = dayjs().format("dddd D [de] MMMM");
 
+  const user = typeof window !== "undefined"
+    ? JSON.parse(localStorage.getItem("emitech_user") || "{}")
+    : {};
+  const salonName = user?.tenant?.name;
+
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-500 capitalize mt-1">{todayStr}</p>
+      <div className="mb-8 flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-500 capitalize mt-1">{todayStr}</p>
+        </div>
+        {salonName && (
+          <div className="text-right">
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-0.5">Tu salón</p>
+            <h2
+              className="text-2xl font-extrabold"
+              style={{
+                background: "linear-gradient(135deg, #9b6dff, #7c4dff)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                letterSpacing: "-0.5px",
+              }}
+            >
+              {salonName}
+            </h2>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
