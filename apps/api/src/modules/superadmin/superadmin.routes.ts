@@ -154,6 +154,20 @@ export async function superadminRoutes(app: FastifyInstance) {
     });
   });
 
+  // ─── PATCH /api/admin/tenants/:id/reset-password ─────────────────────────
+  app.patch("/tenants/:id/reset-password", guard, async (req: any, reply) => {
+    const owner = await prisma.user.findFirst({
+      where: { tenantId: req.params.id, role: "OWNER" },
+    });
+    if (!owner) return reply.status(404).send({ error: "No se encontró el dueño del salón" });
+
+    const DEFAULT_PASSWORD = "12345678";
+    const hash = await bcrypt.hash(DEFAULT_PASSWORD, 12);
+    await prisma.user.update({ where: { id: owner.id }, data: { passwordHash: hash } });
+
+    return { ok: true, email: owner.email, password: DEFAULT_PASSWORD };
+  });
+
   // ─── PATCH /api/admin/tenants/:id/suspend ─────────────────────────────────
   app.patch("/tenants/:id/suspend", guard, async (req: any, reply) => {
     const tenant = await prisma.tenant.findUnique({ where: { id: req.params.id } });

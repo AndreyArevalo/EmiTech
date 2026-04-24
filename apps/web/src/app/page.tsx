@@ -56,8 +56,8 @@ export default function LandingPage() {
         .step-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
         .step-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
         .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 56px; max-width: 700px; margin-left: auto; margin-right: auto; }
-        .plan { background: rgba(155,109,255,0.04); border: 1px solid rgba(155,109,255,0.25); border-radius: 20px; padding: 36px 32px; text-align: center; transition: border-color 0.3s; }
-        .plan.popular { border-color: rgba(155,109,255,0.6); background: rgba(155,109,255,0.08); position: relative; }
+        .plan { background: rgba(155,109,255,0.06); border: 1px solid rgba(155,109,255,0.4); border-radius: 20px; padding: 36px 32px; text-align: center; transition: border-color 0.3s; }
+        .plan.popular { border-color: rgba(155,109,255,0.4); background: rgba(155,109,255,0.06); position: relative; }
         .plan-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #9b6dff, #7c4dff); color: #fff; font-size: 0.72rem; font-weight: 700; padding: 4px 16px; border-radius: 100px; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
         .plan-name { font-size: 1rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         .plan-price { font-size: 2.8rem; font-weight: 900; color: var(--text); letter-spacing: -2px; line-height: 1; }

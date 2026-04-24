@@ -83,4 +83,5 @@ export async function tenantRoutes(app: FastifyInstance) {
     if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
     return prisma.tenant.update({ where: { id: req.user.tenantId }, data: body.data });
   });
+
 }

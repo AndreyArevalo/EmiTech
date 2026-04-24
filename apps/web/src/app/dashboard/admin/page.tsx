@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import {
   Plus, Search, Building2, CheckCircle2, XCircle,
-  AlertCircle, ChevronRight, ShieldCheck,
+  AlertCircle, ChevronRight, ShieldCheck, KeyRound,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -199,6 +199,17 @@ export default function AdminPage() {
     onError: () => toast.error("Error al activar"),
   });
 
+  const resetPassword = useMutation({
+    mutationFn: (id: string) => api.patch(`/api/admin/tenants/${id}/reset-password`).then(r => r.data),
+    onSuccess: (data) => {
+      toast.success(
+        `✅ Contraseña reseteada\nEmail: ${data.email}\nContraseña: ${data.password}`,
+        { duration: 8000 }
+      );
+    },
+    onError: () => toast.error("Error al resetear contraseña"),
+  });
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -308,7 +319,21 @@ export default function AdminPage() {
                   </div>
 
                   {/* Acciones */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {/* Reset contraseña */}
+                    <button
+                      onClick={() => {
+                        if (confirm(`¿Resetear contraseña de "${t.name}"?\nSe establecerá en 12345678.`)) {
+                          resetPassword.mutate(t.id);
+                        }
+                      }}
+                      title="Resetear contraseña"
+                      className="p-2 rounded-lg text-amber-500 hover:bg-amber-50 transition-colors"
+                    >
+                      <KeyRound size={16} />
+                    </button>
+
+                    {/* Suspender / Activar */}
                     {isSuspended ? (
                       <button
                         onClick={() => activate.mutate(t.id)}
@@ -330,7 +355,7 @@ export default function AdminPage() {
                         <XCircle size={18} />
                       </button>
                     )}
-                    <ChevronRight size={16} className="text-gray-300" />
+                    <ChevronRight size={16} className="text-gray-300 ml-1" />
                   </div>
                 </div>
               );

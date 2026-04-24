@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { tenantApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Save, Store, Bot, Clock, Smartphone } from "lucide-react";
+import { Save, Store, Bot, Clock, Smartphone, KeyRound, Eye, EyeOff } from "lucide-react";
 
 const DAYS = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
@@ -18,6 +18,8 @@ export default function SettingsPage() {
   });
   const [waForm, setWaForm] = useState({ waPhoneNumberId: "", waAccessToken: "", waBusinessId: "" });
   const [slotMins, setSlotMins] = useState(30);
+  const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [showPw, setShowPw] = useState(false);
   const [hoursForm, setHoursForm] = useState(
     DAYS.map((_, i) => ({ dayOfWeek: i, openTime: "08:00", closeTime: "18:00", isOpen: i >= 1 && i <= 5, slotMins: 30, breakStart: "", breakEnd: "" }))
   );
@@ -48,6 +50,20 @@ export default function SettingsPage() {
   const saveSalon = useMutation({ mutationFn: () => tenantApi.update(salonForm), onSuccess: () => { qc.invalidateQueries({ queryKey: ["tenant-me"] }); toast.success("Datos guardados"); } });
   const saveBot = useMutation({ mutationFn: () => tenantApi.updateBotConfig(botForm), onSuccess: () => { qc.invalidateQueries({ queryKey: ["tenant-me"] }); toast.success("Bot configurado"); } });
   const saveWa = useMutation({ mutationFn: () => tenantApi.updateWhatsapp(waForm), onSuccess: () => toast.success("WhatsApp conectado") });
+  const changePassword = useMutation({
+    mutationFn: () => {
+      if (pwForm.newPassword !== pwForm.confirmPassword) {
+        throw new Error("Las contraseñas nuevas no coinciden");
+      }
+      return tenantApi.changePassword({ currentPassword: pwForm.currentPassword, newPassword: pwForm.newPassword });
+    },
+    onSuccess: () => {
+      toast.success("Contraseña actualizada ✅");
+      setPwForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    },
+    onError: (err: any) => toast.error(err.response?.data?.error || err.message || "Error al cambiar contraseña"),
+  });
+
   const saveHours = useMutation({
     mutationFn: () => tenantApi.updateWorkingHours(hoursForm.map(h => ({
       ...h,
@@ -223,6 +239,66 @@ export default function SettingsPage() {
           <button onClick={() => saveWa.mutate()} disabled={saveWa.isPending}
             className="mt-4 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
             <Save size={14} /> {saveWa.isPending ? "Guardando..." : "Conectar WhatsApp"}
+          </button>
+        </section>
+
+        {/* Cambiar contraseña */}
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <KeyRound size={18} className="text-brand-500" />
+            <h2 className="font-semibold text-gray-900">Cambiar contraseña</h2>
+          </div>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Contraseña actual</label>
+              <div className="relative">
+                <input
+                  type={showPw ? "text" : "password"}
+                  value={pwForm.currentPassword}
+                  onChange={e => setPwForm(f => ({ ...f, currentPassword: e.target.value }))}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="Tu contraseña actual"
+                />
+                <button type="button" onClick={() => setShowPw(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Nueva contraseña</label>
+              <input
+                type={showPw ? "text" : "password"}
+                value={pwForm.newPassword}
+                onChange={e => setPwForm(f => ({ ...f, newPassword: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="Mínimo 8 caracteres"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Confirmar nueva contraseña</label>
+              <input
+                type={showPw ? "text" : "password"}
+                value={pwForm.confirmPassword}
+                onChange={e => setPwForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                placeholder="Repite la nueva contraseña"
+              />
+            </div>
+            {pwForm.newPassword && pwForm.confirmPassword && pwForm.newPassword !== pwForm.confirmPassword && (
+              <p className="text-xs text-red-500">Las contraseñas no coinciden</p>
+            )}
+          </div>
+          <button
+            onClick={() => changePassword.mutate()}
+            disabled={
+              changePassword.isPending ||
+              !pwForm.currentPassword ||
+              pwForm.newPassword.length < 8 ||
+              pwForm.newPassword !== pwForm.confirmPassword
+            }
+            className="mt-4 flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+            <KeyRound size={14} /> {changePassword.isPending ? "Guardando..." : "Cambiar contraseña"}
           </button>
         </section>
       </div>

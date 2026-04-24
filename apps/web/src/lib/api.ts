@@ -67,6 +67,8 @@ export const tenantApi = {
   updateBotConfig: (data: any) => api.put("/api/tenants/me/bot-config", data).then(r => r.data),
   updateWorkingHours: (data: any) => api.put("/api/tenants/me/working-hours", data).then(r => r.data),
   updateWhatsapp: (data: any) => api.put("/api/tenants/me/whatsapp", data).then(r => r.data),
+  changePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.post("/api/auth/change-password", data).then(r => r.data),
 };
 
 export const whatsappApi = {
