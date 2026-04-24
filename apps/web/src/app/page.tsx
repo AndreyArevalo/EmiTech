@@ -93,7 +93,7 @@ export default function LandingPage() {
             Olvídate de responder WhatsApps a las 11pm. EmiTech agenda citas, confirma, recuerda y gestiona tu salón mientras tú trabajas.
           </p>
           <div className="btns">
-            <Link href="/login" className="btn-p">Empezar gratis 30 días →</Link>
+            <a href="https://wa.me/573156191389?text=Hola%2C%20quiero%20empezar%20mi%20prueba%20gratuita%20de%2030%20d%C3%ADas%20con%20EmiTech%20para%20mi%20sal%C3%B3n%20%F0%9F%92%85" target="_blank" rel="noopener noreferrer" className="btn-p">Empezar gratis 30 días →</a>
             <a href="#como-funciona" className="btn-s">Ver cómo funciona</a>
           </div>
           <div className="stats">
@@ -176,7 +176,7 @@ export default function LandingPage() {
                   <li key={f}>{f}</li>
                 ))}
               </ul>
-              <Link href="/login" className="btn-s" style={{ justifyContent: "center", width: "100%" }}>Empezar gratis</Link>
+              <a href="https://wa.me/573156191389?text=Hola%2C%20quiero%20empezar%20mi%20prueba%20gratuita%20de%2030%20d%C3%ADas%20con%20EmiTech%20para%20mi%20sal%C3%B3n%20%F0%9F%92%85" target="_blank" rel="noopener noreferrer" className="btn-s" style={{ justifyContent: "center", width: "100%" }}>Empezar gratis</a>
             </div>
             <div className="plan popular">
               <div className="plan-badge">⭐ Más popular</div>
@@ -188,7 +188,7 @@ export default function LandingPage() {
                   <li key={f}>{f}</li>
                 ))}
               </ul>
-              <Link href="/login" className="btn-p" style={{ justifyContent: "center", width: "100%", boxSizing: "border-box" }}>Empezar gratis</Link>
+              <a href="https://wa.me/573156191389?text=Hola%2C%20quiero%20empezar%20mi%20prueba%20gratuita%20de%2030%20d%C3%ADas%20con%20EmiTech%20para%20mi%20sal%C3%B3n%20%F0%9F%92%85" target="_blank" rel="noopener noreferrer" className="btn-p" style={{ justifyContent: "center", width: "100%", boxSizing: "border-box" }}>Empezar gratis</a>
             </div>
           </div>
           <p className="trial-note">🎁 <span>30 días de prueba gratis</span> en todos los planes. Sin tarjeta de crédito.</p>
