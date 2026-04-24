@@ -14,11 +14,11 @@ export default function StaffPage() {
 
   const create = useMutation({
     mutationFn: () => staffApi.create(form),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["staff"] }); setShowForm(false); setForm({ name: "", phone: "" }); toast.success("Empleada agregada"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["staff"] }); setShowForm(false); setForm({ name: "", phone: "" }); toast.success("Profesional agregado"); },
   });
   const remove = useMutation({
     mutationFn: staffApi.delete,
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["staff"] }); toast.success("Empleada eliminada"); },
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ["staff"] }); toast.success("Profesional eliminado"); },
   });
 
   return (
@@ -26,11 +26,11 @@ export default function StaffPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Equipo</h1>
-          <p className="text-gray-500 mt-1">Estilistas y empleadas del salón</p>
+          <p className="text-gray-500 mt-1">Profesionales del salón</p>
         </div>
         <button onClick={() => setShowForm(true)}
           className="flex items-center gap-2 bg-brand-500 hover:bg-brand-600 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
-          <Plus size={16} /> Agregar empleada
+          <Plus size={16} /> Agregar profesional
         </button>
       </div>
 
@@ -55,7 +55,7 @@ export default function StaffPage() {
         {staff.length === 0 && (
           <div className="bg-white rounded-2xl p-12 text-center border border-dashed border-gray-200">
             <UserCheck size={40} className="mx-auto text-gray-200 mb-3" />
-            <p className="text-gray-400">Agrega las estilistas de tu salón</p>
+            <p className="text-gray-400">Agrega los profesionales de tu salón</p>
           </div>
         )}
       </div>
@@ -63,7 +63,7 @@ export default function StaffPage() {
       {showForm && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
-            <h3 className="font-bold text-gray-900 mb-4">Nueva empleada</h3>
+            <h3 className="font-bold text-gray-900 mb-4">Nuevo profesional</h3>
             <div className="space-y-3">
               <input placeholder="Nombre completo" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />

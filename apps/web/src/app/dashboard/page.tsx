@@ -2,7 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { dashboardApi, appointmentsApi } from "@/lib/api";
-import { Calendar, Users, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { Calendar, Users, CheckCircle, Clock, AlertCircle, TrendingUp } from "lucide-react";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 dayjs.locale("es");
@@ -70,11 +70,27 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Citas hoy" value={stats?.todayCount} icon={Calendar} color="bg-brand-500" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-8">
+        <StatCard title="Citas hoy" value={stats?.todayCount} icon={Calendar} color="bg-purple-500" />
         <StatCard title="Esta semana" value={stats?.weekCount} icon={CheckCircle} color="bg-green-500" />
         <StatCard title="Este mes" value={stats?.monthCount} icon={Clock} color="bg-blue-500" />
-        <StatCard title="Pendientes de confirmar" value={stats?.pendingCount} icon={AlertCircle} color="bg-yellow-500" />
+        <StatCard title="Pendientes" value={stats?.pendingCount} icon={AlertCircle} color="bg-yellow-500" />
+      </div>
+      {/* Ingresos del mes */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-8 flex items-center gap-4">
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg, #9b6dff, #7c4dff)" }}>
+          <TrendingUp size={22} className="text-white" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-gray-500">Ingresos estimados este mes</p>
+          <p className="text-2xl font-bold text-gray-900">
+            ${(stats?.monthRevenue ?? 0).toLocaleString("es-CO")} <span className="text-sm font-normal text-gray-400">COP</span>
+          </p>
+        </div>
+        <div className="text-right hidden sm:block">
+          <p className="text-xs text-gray-400">Basado en citas confirmadas</p>
+          <p className="text-xs text-gray-400">y completadas del mes</p>
+        </div>
       </div>
 
       {/* Citas de hoy */}

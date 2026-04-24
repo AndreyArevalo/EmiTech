@@ -74,9 +74,9 @@ export default function SettingsPage() {
             <Store size={18} className="text-brand-500" />
             <h2 className="font-semibold text-gray-900">Datos del salón</h2>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {[["Nombre del salón","name","text"],["Teléfono admin","phone","tel"],["Dirección","address","text"],["Ciudad","city","text"]].map(([label, key, type]) => (
-              <div key={key} className={key === "address" ? "col-span-2" : ""}>
+              <div key={key} className={key === "address" || key === "city" ? "sm:col-span-2" : ""}>
                 <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
                 <input type={type} value={(salonForm as any)[key]} onChange={e => setSalonForm(f => ({ ...f, [key]: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
@@ -112,42 +112,45 @@ export default function SettingsPage() {
               <option value={60}>60 min</option>
             </select>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             {hoursForm.map((h, i) => (
               <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                <div className="flex items-center gap-3 flex-wrap">
-                  <div className="w-24">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input type="checkbox" checked={h.isOpen} onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, isOpen: e.target.checked } : d))}
-                        className="w-4 h-4 accent-brand-500" />
-                      <span className="text-sm font-medium text-gray-700">{DAYS[i]}</span>
-                    </label>
-                  </div>
-                  {h.isOpen && (
-                    <>
-                      <input type="time" value={h.openTime} onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, openTime: e.target.value } : d))}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white" />
-                      <span className="text-gray-400 text-sm">–</span>
-                      <input type="time" value={h.closeTime} onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, closeTime: e.target.value } : d))}
-                        className="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white" />
-                    </>
+                {/* Fila principal: checkbox + horario */}
+                <div className="flex items-center gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer w-28 shrink-0">
+                    <input type="checkbox" checked={h.isOpen}
+                      onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, isOpen: e.target.checked } : d))}
+                      className="w-4 h-4 accent-purple-500" />
+                    <span className="text-sm font-semibold text-gray-700">{DAYS[i]}</span>
+                  </label>
+                  {h.isOpen ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input type="time" value={h.openTime}
+                        onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, openTime: e.target.value } : d))}
+                        className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white" />
+                      <span className="text-gray-400 text-sm shrink-0">–</span>
+                      <input type="time" value={h.closeTime}
+                        onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, closeTime: e.target.value } : d))}
+                        className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white" />
+                    </div>
+                  ) : (
+                    <span className="text-sm text-gray-400 italic">Cerrado</span>
                   )}
-                  {!h.isOpen && <span className="text-sm text-gray-400 italic">Cerrado</span>}
                 </div>
+                {/* Fila descanso */}
                 {h.isOpen && (
-                  <div className="flex items-center gap-2 mt-2 flex-wrap">
-                    <span className="text-xs text-gray-500 w-24">☕ Descanso</span>
-                    <input type="time" value={h.breakStart || ""} onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, breakStart: e.target.value } : d))}
-                      className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-gray-600" />
-                    <span className="text-gray-400 text-xs">–</span>
-                    <input type="time" value={h.breakEnd || ""} onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, breakEnd: e.target.value } : d))}
-                      className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white text-gray-600" />
+                  <div className="flex items-center gap-2 mt-2 pl-1">
+                    <span className="text-xs text-gray-400 w-28 shrink-0">☕ Descanso</span>
+                    <input type="time" value={h.breakStart || ""}
+                      onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, breakStart: e.target.value } : d))}
+                      className="flex-1 min-w-0 border border-gray-100 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-600" />
+                    <span className="text-gray-300 text-xs shrink-0">–</span>
+                    <input type="time" value={h.breakEnd || ""}
+                      onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, breakEnd: e.target.value } : d))}
+                      className="flex-1 min-w-0 border border-gray-100 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-600" />
                     {(h.breakStart || h.breakEnd) && (
                       <button onClick={() => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, breakStart: "", breakEnd: "" } : d))}
-                        className="text-xs text-red-400 hover:text-red-600">✕</button>
-                    )}
-                    {!h.breakStart && !h.breakEnd && (
-                      <span className="text-xs text-gray-400 italic">Sin descanso</span>
+                        className="text-xs text-red-400 hover:text-red-600 shrink-0">✕</button>
                     )}
                   </div>
                 )}

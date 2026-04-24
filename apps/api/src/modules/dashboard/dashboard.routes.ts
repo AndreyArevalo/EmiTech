@@ -12,14 +12,20 @@ export async function dashboardRoutes(app: FastifyInstance) {
     const weekStart = dayjs().startOf("week").format("YYYY-MM-DD");
     const monthStart = dayjs().startOf("month").format("YYYY-MM-DD");
 
-    const [todayAppts, weekAppts, monthAppts, totalClients, pendingAppts] =
+    const [todayAppts, weekAppts, monthAppts, totalClients, pendingAppts, monthRevenue] =
       await Promise.all([
         prisma.appointment.count({ where: { tenantId, date: today } }),
         prisma.appointment.count({ where: { tenantId, date: { gte: weekStart }, status: "CONFIRMED" } }),
         prisma.appointment.count({ where: { tenantId, date: { gte: monthStart }, status: { in: ["CONFIRMED", "COMPLETED"] } } }),
         prisma.client.count({ where: { tenantId } }),
         prisma.appointment.count({ where: { tenantId, status: "PENDING" } }),
+        prisma.appointment.findMany({
+          where: { tenantId, date: { gte: monthStart }, status: { in: ["CONFIRMED", "COMPLETED"] } },
+          include: { service: { select: { price: true } } },
+        }),
       ]);
+
+    const monthRevenueTotal = monthRevenue.reduce((sum: number, a: any) => sum + (Number(a.service?.price) || 0), 0);
 
     const todayApptsDetail = await prisma.appointment.findMany({
       where: { tenantId, date: today },
@@ -33,6 +39,7 @@ export async function dashboardRoutes(app: FastifyInstance) {
       monthCount: monthAppts,
       totalClients,
       pendingCount: pendingAppts,
+      monthRevenue: monthRevenueTotal,
       todayAppointments: todayApptsDetail,
     };
   });
