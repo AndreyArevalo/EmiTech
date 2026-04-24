@@ -71,19 +71,34 @@ export default function ServicesPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <h3 className="font-bold text-gray-900 mb-4">{editId ? "Editar" : "Nuevo"} servicio</h3>
-            <div className="space-y-3">
-              <input placeholder="Nombre del servicio" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-              <div className="flex gap-3">
-                <input placeholder="Emoji" value={form.emoji} onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))}
-                  className="w-20 border border-gray-300 rounded-lg px-3 py-2 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-500" />
-                <input type="number" placeholder="Duración (min)" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: +e.target.value }))}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-                <input type="number" placeholder="Precio (COP)" value={form.price} onChange={e => setForm(f => ({ ...f, price: +e.target.value }))}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Nombre del servicio</label>
+                <input placeholder="Ej: Corte de cabello" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
               </div>
-              <textarea placeholder="Descripción (opcional)" value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Emoji</label>
+                  <input placeholder="💅" value={form.emoji} onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm text-center focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Duración (min)</label>
+                  <input type="number" min={5} placeholder="60" value={form.duration} onChange={e => setForm(f => ({ ...f, duration: +e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Precio (COP)</label>
+                  <input type="number" min={0} placeholder="50000" value={form.price} onChange={e => setForm(f => ({ ...f, price: +e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Descripción <span className="normal-case font-normal text-gray-400">(opcional)</span></label>
+                <textarea placeholder="Describe brevemente el servicio..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm h-20 resize-none focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              </div>
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={() => setShowForm(false)} className="flex-1 border border-gray-300 text-gray-600 py-2 rounded-lg text-sm">Cancelar</button>

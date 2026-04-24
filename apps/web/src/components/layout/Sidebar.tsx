@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   LayoutDashboard, Calendar, Users, Scissors, UserCheck,
-  MessageSquare, Settings, LogOut, Sparkles, CreditCard, ShieldCheck,
+  MessageSquare, Settings, LogOut, CreditCard, ShieldCheck,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -35,13 +36,20 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col min-h-screen fixed left-0 top-0 z-30">
       {/* Logo */}
-      <div className="p-6 border-b border-gray-100">
+      <div className="p-5 border-b border-gray-100">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center">
-            <Sparkles size={18} className="text-white" />
-          </div>
+          <Image
+            src="/perfilemi.png"
+            alt="EmiTech"
+            width={36}
+            height={36}
+            className="rounded-full"
+            style={{ border: "1.5px solid rgba(155,109,255,0.4)" }}
+          />
           <div>
-            <p className="font-bold text-gray-900 leading-none">EmiTech</p>
+            <p className="font-extrabold leading-none" style={{ color: "#1a1a2e", fontSize: "1.05rem" }}>
+              Emi<span style={{ color: "#9b6dff" }}>Tech</span>
+            </p>
             <p className="text-xs text-gray-400 mt-0.5">Panel Admin</p>
           </div>
         </div>
@@ -58,11 +66,11 @@ export function Sidebar() {
               className={clsx(
                 "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                 active
-                  ? "bg-brand-50 text-brand-700"
+                  ? "bg-purple-50 text-purple-700"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               )}
             >
-              <item.icon size={18} className={active ? "text-brand-500" : ""} />
+              <item.icon size={18} className={active ? "text-purple-600" : ""} />
               {item.label}
             </Link>
           );
