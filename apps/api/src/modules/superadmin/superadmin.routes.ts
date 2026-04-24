@@ -25,6 +25,11 @@ function superAdminOnly(app: FastifyInstance) {
 export async function superadminRoutes(app: FastifyInstance) {
   const guard = superAdminOnly(app);
 
+  // ─── GET /api/admin/plans — Listar planes disponibles ────────────────────
+  app.get("/plans", guard, async () => {
+    return prisma.plan.findMany({ where: { active: true }, orderBy: { price: "asc" } });
+  });
+
   // ─── GET /api/admin/tenants — Listar todos los salones ───────────────────
   app.get("/tenants", guard, async (req: any) => {
     const { search, status } = req.query as any;
@@ -98,7 +103,10 @@ export async function superadminRoutes(app: FastifyInstance) {
       await tx.botConfig.create({
         data: {
           tenantId: t.id,
-          welcomeMessage: `✨ ¡Hola! Bienvenida a *${body.data.salonName}* 💅\n¿Qué servicio deseas agendar?`,
+          welcomeMessage: `✨ ¡Hola! Bienvenida a *${body.data.salonName}* 💅\n\nEstoy aquí para ayudarte a agendar tu cita de forma rápida y sencilla.\n\n¿Qué servicio deseas agendar hoy?`,
+          closedMessage: `😴 En este momento estamos fuera de horario de atención.\n\nPuedes escribirnos de nuevo durante nuestro horario habitual y con gusto te atendemos. ¡Gracias por contactar a *${body.data.salonName}*! 💕`,
+          confirmMessage: `✅ ¡Tu cita ha sido registrada con éxito!\n\nEn breve te confirmaremos la disponibilidad. Cualquier cambio te avisamos por aquí. ¡Gracias por elegirnos! 🌸`,
+          reminderMessage: `💅 Hola *{nombre}*, te recordamos que tienes una cita en *${body.data.salonName}* hoy a las *{hora}* para *{servicio}*.\n\n¡Te esperamos! Si necesitas cancelar o reprogramar, escríbenos. 🙏`,
           isOpen: true,
           requiresConfirm: true,
         },

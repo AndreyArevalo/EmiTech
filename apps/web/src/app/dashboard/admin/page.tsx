@@ -46,46 +46,52 @@ function toSlug(name: string) {
 function NewSalonModal({ onClose }: { onClose: () => void }) {
   const qc = useQueryClient();
   const [form, setForm] = useState({
-    salonName: "", slug: "", ownerEmail: "", ownerPassword: "", timezone: "America/Bogota",
+    salonName: "", slug: "", adminName: "", adminEmail: "", adminPassword: "", planId: "",
   });
 
   const set = (k: string, v: string) => setForm(p => ({ ...p, [k]: v }));
 
+  const { data: plans = [] } = useQuery<{ id: string; name: string; price: string }[]>({
+    queryKey: ["plans"],
+    queryFn: () => api.get("/api/admin/plans").then(r => r.data),
+  });
+
   const create = useMutation({
     mutationFn: (data: typeof form) => api.post("/api/admin/tenants", data).then(r => r.data),
-    onSuccess: () => {
-      toast.success("Salón creado correctamente");
+    onSuccess: (res) => {
+      toast.success(`Salón creado — email: ${res.credentials.email} / pass: ${res.credentials.password}`);
       qc.invalidateQueries({ queryKey: ["admin-tenants"] });
       onClose();
     },
     onError: (err: any) => toast.error(err.response?.data?.error || "Error al crear salón"),
   });
 
+  const canSubmit = form.salonName && form.slug && form.adminName && form.adminEmail && form.adminPassword.length >= 8 && form.planId;
+
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="p-6 border-b border-gray-100">
           <h2 className="text-lg font-semibold text-gray-900">Nuevo salón</h2>
           <p className="text-sm text-gray-500 mt-1">Se crea con 30 días de trial gratuito</p>
         </div>
 
         <div className="p-6 space-y-4">
+          {/* Salón */}
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Datos del salón</p>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Nombre del salón</label>
             <input
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
               placeholder="Ej: Geminis Studio"
               value={form.salonName}
-              onChange={e => {
-                set("salonName", e.target.value);
-                set("slug", toSlug(e.target.value));
-              }}
+              onChange={e => { set("salonName", e.target.value); set("slug", toSlug(e.target.value)); }}
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Slug <span className="text-gray-400 font-normal">(ID único en URL)</span>
+              Slug <span className="text-gray-400 font-normal">(ID único)</span>
             </label>
             <input
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400 font-mono"
@@ -97,13 +103,39 @@ function NewSalonModal({ onClose }: { onClose: () => void }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email del administrador</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Plan</label>
+            <select
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+              value={form.planId}
+              onChange={e => set("planId", e.target.value)}
+            >
+              <option value="">Selecciona un plan...</option>
+              {plans.map(p => (
+                <option key={p.id} value={p.id}>{p.name} — ${Number(p.price).toLocaleString("es-CO")} COP/mes</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Admin */}
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide pt-2">Administrador del salón</p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+            <input
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
+              placeholder="Ej: Ana Gómez"
+              value={form.adminName}
+              onChange={e => set("adminName", e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
               placeholder="admin@salon.com"
-              value={form.ownerEmail}
-              onChange={e => set("ownerEmail", e.target.value)}
+              value={form.adminEmail}
+              onChange={e => set("adminEmail", e.target.value)}
             />
           </div>
 
@@ -113,24 +145,9 @@ function NewSalonModal({ onClose }: { onClose: () => void }) {
               type="password"
               className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
               placeholder="Mínimo 8 caracteres"
-              value={form.ownerPassword}
-              onChange={e => set("ownerPassword", e.target.value)}
+              value={form.adminPassword}
+              onChange={e => set("adminPassword", e.target.value)}
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Zona horaria</label>
-            <select
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-400"
-              value={form.timezone}
-              onChange={e => set("timezone", e.target.value)}
-            >
-              <option value="America/Bogota">Colombia (Bogotá)</option>
-              <option value="America/Mexico_City">México</option>
-              <option value="America/Lima">Perú</option>
-              <option value="America/Santiago">Chile</option>
-              <option value="America/Argentina/Buenos_Aires">Argentina</option>
-            </select>
           </div>
         </div>
 
@@ -143,7 +160,7 @@ function NewSalonModal({ onClose }: { onClose: () => void }) {
           </button>
           <button
             onClick={() => create.mutate(form)}
-            disabled={create.isPending || !form.salonName || !form.ownerEmail || !form.ownerPassword}
+            disabled={create.isPending || !canSubmit}
             className="flex-1 px-4 py-2.5 rounded-xl bg-fuchsia-500 text-white text-sm font-medium hover:bg-fuchsia-600 disabled:opacity-50"
           >
             {create.isPending ? "Creando..." : "Crear salón"}
