@@ -77,7 +77,7 @@ export default function ServicesPage() {
                 <input placeholder="Ej: Corte de cabello" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                   className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Emoji</label>
                   <input placeholder="💅" value={form.emoji} onChange={e => setForm(f => ({ ...f, emoji: e.target.value }))}

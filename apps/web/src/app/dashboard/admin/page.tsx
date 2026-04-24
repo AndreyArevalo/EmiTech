@@ -223,14 +223,14 @@ export default function AdminPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
           {[
             { label: "Total salones", value: stats.totalTenants },
-            { label: "Activos", value: stats.activeTenants },
-            { label: "En trial", value: stats.trialTenants },
+            { label: "Activos", value: stats.activeSubs },
+            { label: "En trial", value: stats.trialSubs },
             { label: "Citas totales", value: stats.totalAppointments },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-5">
+            <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-4 md:p-5">
               <p className="text-2xl font-bold text-gray-900">{s.value ?? "—"}</p>
               <p className="text-sm text-gray-500 mt-1">{s.label}</p>
             </div>
