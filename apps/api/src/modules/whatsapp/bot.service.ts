@@ -15,11 +15,11 @@ function isYes(text: string): boolean {
     .includes(text.trim().toLowerCase());
 }
 function isNo(text: string): boolean {
-  return ["no","n","cancelar","corregir","cambiar","editar","modificar","otro","corregir datos"]
+  return ["no","n","corregir","cambiar","editar","modificar","otro","corregir datos"]
     .includes(text.trim().toLowerCase());
 }
 function isReset(text: string): boolean {
-  return ["menu","menú","inicio","start","hola","buenas","buenos días","buenas tardes","buenas noches"]
+  return ["menu","menú","inicio","start","hola","buenas","buenos días","buenas tardes","buenas noches","cancelar","salir","volver"]
     .some(k => text.trim().toLowerCase() === k || text.trim().toLowerCase().startsWith(k + " "));
 }
 
@@ -54,9 +54,9 @@ function staffListReply(
   return {
     kind: "list",
     body: header,
-    buttonLabel: "Ver estilistas",
+    buttonLabel: "Ver profesionales",
     sections: [{
-      title: "Estilistas disponibles",
+      title: "Profesionales disponibles",
       rows: staff.map((s, i) => ({
         id: String(i + 1),
         title: s.name,
@@ -232,7 +232,7 @@ function buildResumen(d: Record<string, any>): string {
     `📋 *Resumen de tu cita:*\n\n` +
     `👤 Nombre: ${d.name}\n` +
     `💅 Servicio: ${d.serviceName}\n` +
-    (d.staffName ? `✂️ Estilista: ${d.staffName}\n` : "") +
+    (d.staffName ? `✂️ Profesional: ${d.staffName}\n` : "") +
     `📅 Fecha: ${formatDateSpanish(d.dateISO)}\n` +
     `🕒 Hora: ${formatTime(d.time)}\n\n` +
     `¿Todo correcto?`
@@ -437,7 +437,7 @@ export async function handleBotMessage(
     });
     return reply(staffListReply(
       allStaff,
-      `Perfecto, *${found.name}* ${found.emoji ?? "💅"}\n\n¿Con qué estilista deseas tu cita?`
+      `Perfecto, *${found.name}* ${found.emoji ?? "💅"}\n\n¿Con qué profesional deseas tu cita?`
     ));
   }
 
@@ -642,7 +642,7 @@ export async function handleBotMessage(
           title: "Opciones",
           rows: [
             { id: "corr_servicio", title: "💅 Servicio" },
-            { id: "corr_estilista", title: "✂️ Estilista" },
+            { id: "corr_estilista", title: "✂️ Profesional" },
             { id: "corr_fecha", title: "📅 Fecha" },
             { id: "corr_hora", title: "🕒 Hora" },
             { id: "corr_nombre", title: "👤 Nombre" },
@@ -665,10 +665,10 @@ export async function handleBotMessage(
       await updateStep("esperando_servicio", {});
       return reply(serviceListReply(services, "¿Qué servicio deseas agendar?"));
     }
-    if (tl === "2" || tl === "corr_estilista" || tl.includes("estilista")) {
+    if (tl === "2" || tl === "corr_estilista" || tl.includes("estilista") || tl.includes("profesional")) {
       let allStaff = await prisma.staff.findMany({ where: { tenantId, active: true }, orderBy: { name: "asc" } });
       await updateStep("esperando_staff", { ...convData, staffOptions: allStaff.map(s => ({ id: s.id, name: s.name })) });
-      return reply(staffListReply(allStaff, "¿Con qué estilista deseas tu cita?"));
+      return reply(staffListReply(allStaff, "¿Con qué profesional deseas tu cita?"));
     }
     if (tl === "3" || tl === "corr_fecha" || tl.includes("fecha")) {
       await updateStep("esperando_fecha", convData);

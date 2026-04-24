@@ -56,8 +56,8 @@ export default function LandingPage() {
         .step-title { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
         .step-desc { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
         .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-top: 56px; max-width: 700px; margin-left: auto; margin-right: auto; }
-        .plan { background: var(--card); border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; text-align: center; transition: border-color 0.3s; }
-        .plan.popular { border-color: rgba(155,109,255,0.5); background: rgba(155,109,255,0.05); position: relative; }
+        .plan { background: rgba(155,109,255,0.04); border: 1px solid rgba(155,109,255,0.25); border-radius: 20px; padding: 36px 32px; text-align: center; transition: border-color 0.3s; }
+        .plan.popular { border-color: rgba(155,109,255,0.6); background: rgba(155,109,255,0.08); position: relative; }
         .plan-badge { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #9b6dff, #7c4dff); color: #fff; font-size: 0.72rem; font-weight: 700; padding: 4px 16px; border-radius: 100px; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
         .plan-name { font-size: 1rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
         .plan-price { font-size: 2.8rem; font-weight: 900; color: var(--text); letter-spacing: -2px; line-height: 1; }
@@ -115,7 +115,7 @@ export default function LandingPage() {
           <div className="cards">
             {[
               { icon: "🤖", title: "Bot de WhatsApp con IA", desc: "Atiende consultas, muestra servicios y agenda citas automáticamente. Si no sabe la respuesta, escala al humano." },
-              { icon: "📅", title: "Agenda inteligente", desc: "Control de disponibilidad por estilista, horarios configurables y bloqueo de horas de descanso automático." },
+              { icon: "📅", title: "Agenda inteligente", desc: "Control de disponibilidad por profesional, horarios configurables y bloqueo de horas de descanso automático." },
               { icon: "🔔", title: "Recordatorios automáticos", desc: "El bot avisa a tus clientes horas antes de su cita. Reduce las inasistencias hasta en un 70%." },
               { icon: "👥", title: "Gestión de clientes", desc: "Historial completo de citas, servicios favoritos y datos de contacto de cada cliente." },
               { icon: "📊", title: "Panel de control", desc: "Dashboard con métricas en tiempo real: ingresos, citas del día, servicios más populares y más." },
@@ -143,7 +143,7 @@ export default function LandingPage() {
           </div>
           <div className="steps">
             {[
-              { n: "1", emoji: "📋", title: "Configura tu salón", desc: "Agrega tus servicios, precios, horarios y estilistas en el panel." },
+              { n: "1", emoji: "📋", title: "Configura tu salón", desc: "Agrega tus servicios, precios, horarios y profesionales en el panel." },
               { n: "2", emoji: "📱", title: "Conecta WhatsApp", desc: "Vincula tu número de WhatsApp Business y activa el bot." },
               { n: "3", emoji: "🤖", title: "El bot trabaja", desc: "Tus clientes escriben y el bot agenda, confirma y recuerda por ellos." },
               { n: "4", emoji: "💰", title: "Tú cobras más", desc: "Más citas, menos no-shows, más tiempo para enfocarte en tu trabajo." },
@@ -172,7 +172,7 @@ export default function LandingPage() {
               <div className="plan-price"><sup>$</sup>89.900</div>
               <div className="plan-period">COP / mes</div>
               <ul className="plan-features">
-                {["Bot de WhatsApp 24/7","Hasta 3 estilistas","Hasta 15 servicios","Recordatorios automáticos","Panel de administración"].map(f => (
+                {["Bot de WhatsApp 24/7","Hasta 3 profesionales","Hasta 15 servicios","Recordatorios automáticos","Panel de administración"].map(f => (
                   <li key={f}>{f}</li>
                 ))}
               </ul>
@@ -184,7 +184,7 @@ export default function LandingPage() {
               <div className="plan-price"><sup>$</sup>159.900</div>
               <div className="plan-period">COP / mes</div>
               <ul className="plan-features">
-                {["Todo lo del Básico","Hasta 10 estilistas","Hasta 50 servicios","IA como asistente del bot","Soporte prioritario","Reportes avanzados"].map(f => (
+                {["Todo lo del Básico","Hasta 10 profesionales","Hasta 50 servicios","IA como asistente del bot","Soporte prioritario","Reportes avanzados"].map(f => (
                   <li key={f}>{f}</li>
                 ))}
               </ul>

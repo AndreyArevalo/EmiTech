@@ -27,14 +27,15 @@ export async function whatsappRoutes(app: FastifyInstance) {
   app.post("/webhook", {
     config: { rawBody: true }, // necesario para validar firma
   }, async (req: any, reply) => {
-    // Validar firma HMAC (solo en producción)
-    if (process.env.NODE_ENV === "production") {
+    // Validar firma HMAC (solo en producción y si APP_SECRET está configurado)
+    const appSecret = process.env.META_APP_SECRET || "";
+    if (process.env.NODE_ENV === "production" && appSecret) {
       const signature = req.headers["x-hub-signature-256"] as string;
-      const appSecret = process.env.META_APP_SECRET || "";
-      if (appSecret && signature) {
+      if (signature) {
+        const rawBody = (req as any).rawBody ?? Buffer.from(JSON.stringify(req.body));
         const expectedSig = "sha256=" + crypto
           .createHmac("sha256", appSecret)
-          .update(JSON.stringify(req.body) || "")
+          .update(rawBody)
           .digest("hex");
         if (signature !== expectedSig) {
           return reply.status(401).send("Invalid signature");
