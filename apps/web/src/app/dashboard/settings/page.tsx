@@ -61,7 +61,7 @@ export default function SettingsPage() {
   if (isLoading) return <div className="text-gray-400 p-8">Cargando configuración...</div>;
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-2xl overflow-hidden">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Configuración</h1>
         <p className="text-gray-500 mt-1">Personaliza tu salón y el comportamiento del bot</p>
@@ -69,7 +69,7 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
         {/* Salón */}
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Store size={18} className="text-brand-500" />
             <h2 className="font-semibold text-gray-900">Datos del salón</h2>
@@ -93,18 +93,18 @@ export default function SettingsPage() {
         </section>
 
         {/* Horarios */}
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Clock size={18} className="text-brand-500" />
             <h2 className="font-semibold text-gray-900">Horarios de atención</h2>
           </div>
           <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900">Duración mínima del slot</p>
-              <p className="text-xs text-gray-500">Granularidad del calendario (cada cuántos minutos hay un slot disponible)</p>
+              <p className="text-xs text-gray-500 hidden sm:block">Granularidad del calendario</p>
             </div>
             <select value={slotMins} onChange={e => setSlotMins(Number(e.target.value))}
-              className="ml-auto border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
+              className="shrink-0 border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500">
               <option value={15}>15 min</option>
               <option value={20}>20 min</option>
               <option value={30}>30 min</option>
@@ -115,16 +115,16 @@ export default function SettingsPage() {
           <div className="space-y-2">
             {hoursForm.map((h, i) => (
               <div key={i} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-                {/* Fila principal: checkbox + horario */}
-                <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer w-28 shrink-0">
+                {/* Fila: checkbox + día + horario (en desktop en línea, en mobile apilado) */}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer shrink-0">
                     <input type="checkbox" checked={h.isOpen}
                       onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, isOpen: e.target.checked } : d))}
                       className="w-4 h-4 accent-purple-500" />
-                    <span className="text-sm font-semibold text-gray-700">{DAYS[i]}</span>
+                    <span className="text-sm font-semibold text-gray-700 w-20">{DAYS[i]}</span>
                   </label>
                   {h.isOpen ? (
-                    <div className="flex items-center gap-2 flex-1">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
                       <input type="time" value={h.openTime}
                         onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, openTime: e.target.value } : d))}
                         className="flex-1 min-w-0 border border-gray-200 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white" />
@@ -139,8 +139,8 @@ export default function SettingsPage() {
                 </div>
                 {/* Fila descanso */}
                 {h.isOpen && (
-                  <div className="flex items-center gap-2 mt-2 pl-1">
-                    <span className="text-xs text-gray-400 w-28 shrink-0">☕ Descanso</span>
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-gray-400 shrink-0">☕ Descanso</span>
                     <input type="time" value={h.breakStart || ""}
                       onChange={e => setHoursForm(f => f.map((d, idx) => idx === i ? { ...d, breakStart: e.target.value } : d))}
                       className="flex-1 min-w-0 border border-gray-100 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-600" />
@@ -164,7 +164,7 @@ export default function SettingsPage() {
         </section>
 
         {/* Bot */}
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Bot size={18} className="text-brand-500" />
             <h2 className="font-semibold text-gray-900">Configuración del bot</h2>
@@ -205,7 +205,7 @@ export default function SettingsPage() {
         </section>
 
         {/* WhatsApp Meta API */}
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
           <div className="flex items-center gap-2 mb-1">
             <Smartphone size={18} className="text-green-500" />
             <h2 className="font-semibold text-gray-900">Conexión WhatsApp (Meta)</h2>
