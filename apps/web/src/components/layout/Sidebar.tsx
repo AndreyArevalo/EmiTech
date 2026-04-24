@@ -23,6 +23,14 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<any>({});
+
+  // Cargar user solo en cliente
+  useEffect(() => {
+    try {
+      setUser(JSON.parse(localStorage.getItem("emitech_user") || "{}"));
+    } catch {}
+  }, []);
 
   // Cerrar drawer al cambiar de ruta
   useEffect(() => { setOpen(false); }, [pathname]);
@@ -34,9 +42,6 @@ export function Sidebar() {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  const user = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("emitech_user") || "{}")
-    : {};
   const isSuperAdmin = user?.role === "SUPERADMIN";
 
   function handleLogout() {

@@ -1,5 +1,6 @@
 "use client";
 import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
 import { dashboardApi, appointmentsApi } from "@/lib/api";
 import { Calendar, Users, CheckCircle, Clock, AlertCircle } from "lucide-react";
 import dayjs from "dayjs";
@@ -33,10 +34,13 @@ export default function DashboardPage() {
 
   const todayStr = dayjs().format("dddd D [de] MMMM");
 
-  const user = typeof window !== "undefined"
-    ? JSON.parse(localStorage.getItem("emitech_user") || "{}")
-    : {};
-  const salonName = user?.tenant?.name;
+  const [salonName, setSalonName] = useState("");
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem("emitech_user") || "{}");
+      setSalonName(u?.tenant?.name || "");
+    } catch {}
+  }, []);
 
   return (
     <div>
