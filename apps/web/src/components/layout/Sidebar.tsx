@@ -1,10 +1,11 @@
 "use client";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard, Calendar, Users, Scissors, UserCheck,
-  MessageSquare, Settings, LogOut, CreditCard, ShieldCheck,
+  MessageSquare, Settings, LogOut, CreditCard, ShieldCheck, Menu, X,
 } from "lucide-react";
 import { clsx } from "clsx";
 
@@ -21,6 +22,17 @@ const NAV_ITEMS = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [open, setOpen] = useState(false);
+
+  // Cerrar drawer al cambiar de ruta
+  useEffect(() => { setOpen(false); }, [pathname]);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const user = typeof window !== "undefined"
     ? JSON.parse(localStorage.getItem("emitech_user") || "{}")
@@ -33,10 +45,10 @@ export function Sidebar() {
     window.location.href = "/login";
   }
 
-  return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col min-h-screen fixed left-0 top-0 z-30">
+  const sidebarContent = (
+    <>
       {/* Logo */}
-      <div className="p-5 border-b border-gray-100">
+      <div className="p-5 border-b border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Image
             src="/perfilemi.png"
@@ -53,10 +65,17 @@ export function Sidebar() {
             <p className="text-xs text-gray-400 mt-0.5">Panel Admin</p>
           </div>
         </div>
+        {/* Botón cerrar en móvil */}
+        <button
+          onClick={() => setOpen(false)}
+          className="md:hidden p-1.5 rounded-lg text-gray-400 hover:bg-gray-100"
+        >
+          <X size={18} />
+        </button>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {NAV_ITEMS.map((item) => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
@@ -107,6 +126,49 @@ export function Sidebar() {
           Cerrar sesión
         </button>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── TOPBAR MÓVIL ── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3">
+        <button
+          onClick={() => setOpen(true)}
+          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
+        >
+          <Menu size={20} />
+        </button>
+        <div className="flex items-center gap-2">
+          <Image src="/perfilemi.png" alt="EmiTech" width={28} height={28} className="rounded-full" />
+          <span className="font-extrabold text-base" style={{ color: "#1a1a2e" }}>
+            Emi<span style={{ color: "#9b6dff" }}>Tech</span>
+          </span>
+        </div>
+      </div>
+
+      {/* ── OVERLAY (móvil) ── */}
+      {open && (
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* ── SIDEBAR DESKTOP (fijo) ── */}
+      <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col min-h-screen fixed left-0 top-0 z-30">
+        {sidebarContent}
+      </aside>
+
+      {/* ── DRAWER MÓVIL (deslizable) ── */}
+      <aside
+        className={clsx(
+          "md:hidden fixed top-0 left-0 z-50 w-72 bg-white h-full flex flex-col shadow-2xl transition-transform duration-300",
+          open ? "translate-x-0" : "-translate-x-full"
+        )}
+      >
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
