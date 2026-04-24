@@ -165,12 +165,18 @@ export async function superadminRoutes(app: FastifyInstance) {
 
   // ─── PATCH /api/admin/tenants/:id/activate ────────────────────────────────
   app.patch("/tenants/:id/activate", guard, async (req: any, reply) => {
-    const schema = z.object({ planId: z.string() });
-    const body = schema.safeParse(req.body);
-    if (!body.success) return reply.status(400).send({ error: body.error.flatten() });
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: req.params.id },
+      include: { subscription: true },
+    });
+    if (!tenant) return reply.status(404).send({ error: "No encontrado" });
+
+    // Usar el plan existente de la suscripción, o el planId del body si se envía
+    const planId = (req.body as any)?.planId || tenant.subscription?.planId;
+    if (!planId) return reply.status(400).send({ error: "No hay plan asociado a este salón" });
 
     await prisma.tenant.update({ where: { id: req.params.id }, data: { active: true } });
-    await activateSubscription(req.params.id, body.data.planId);
+    await activateSubscription(req.params.id, planId);
     return { ok: true };
   });
 
