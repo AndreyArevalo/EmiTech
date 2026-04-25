@@ -1,174 +1,109 @@
 nohup: ignoring input
-time="2026-04-24T06:35:51Z" level=warning msg="/app/docker-compose.prod.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+time="2026-04-24T08:22:42Z" level=warning msg="/app/docker-compose.prod.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
  Image app-api Building 
- Image app-web Building 
 #1 [internal] load local bake definitions
-#1 reading from stdin 895B done
+#1 reading from stdin 449B done
 #1 DONE 0.0s
 
-#2 [web internal] load build definition from Dockerfile
-#2 transferring dockerfile: 1.74kB 0.1s done
-#2 DONE 0.1s
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 1.65kB 0.0s done
+#2 DONE 0.0s
 
-#3 [api internal] load build definition from Dockerfile
-#3 transferring dockerfile: 1.65kB 0.1s done
-#3 DONE 0.1s
+#3 [internal] load metadata for docker.io/library/node:20-alpine
+#3 DONE 0.4s
 
-#4 [api internal] load metadata for docker.io/library/node:20-alpine
-#4 DONE 0.4s
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
 
-#5 [api internal] load .dockerignore
-#5 transferring context: 2B done
-#5 DONE 0.0s
+#5 [ 1/16] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#5 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.1s done
+#5 DONE 0.1s
 
-#6 [web  1/16] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
-#6 ...
+#6 [internal] load build context
+#6 transferring context: 111.57kB 0.1s done
+#6 DONE 0.1s
 
-#7 [web internal] load build context
-#7 DONE 0.0s
+#7 [ 7/16] COPY packages/database/tsconfig.json      ./packages/database/
+#7 CACHED
 
-#8 [api internal] load build context
-#8 DONE 0.0s
+#8 [ 9/16] COPY apps/api/package.json                ./apps/api/
+#8 CACHED
 
-#6 [web  1/16] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
-#6 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.1s done
-#6 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.1s done
-#6 DONE 0.2s
-
-#7 [web internal] load build context
-#7 transferring context: 3.69kB 0.1s done
-#7 DONE 0.1s
-
-#8 [api internal] load build context
-#8 transferring context: 3.58kB 0.1s done
-#8 DONE 0.1s
-
-#9 [web 11/16] COPY packages/database/src ./packages/database/src
+#9 [10/16] COPY apps/api/tsconfig.json               ./apps/api/
 #9 CACHED
 
-#10 [web  7/16] COPY packages/database/tsconfig.json      ./packages/database/
+#10 [ 2/16] RUN apk add --no-cache openssl
 #10 CACHED
 
-#11 [web 12/16] COPY apps/web              ./apps/web
+#11 [ 4/16] WORKDIR /app
 #11 CACHED
 
-#12 [web 13/16] RUN pnpm --filter @emitech/database exec prisma generate
+#12 [ 5/16] COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.base.json ./
 #12 CACHED
 
-#13 [web  6/16] COPY packages/database/package.json       ./packages/database/
+#13 [ 8/16] COPY packages/database/prisma             ./packages/database/prisma/
 #13 CACHED
 
-#14 [web  3/16] RUN npm install -g pnpm
+#14 [11/16] RUN pnpm install --frozen-lockfile
 #14 CACHED
 
-#15 [web 14/16] RUN pnpm --filter @emitech/database build
+#15 [ 3/16] RUN npm install -g pnpm
 #15 CACHED
 
-#16 [web  4/16] WORKDIR /app
+#16 [ 6/16] COPY packages/database/package.json       ./packages/database/
 #16 CACHED
 
-#17 [web  5/16] COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.base.json ./
+#17 [12/16] COPY packages/database/src ./packages/database/src
 #17 CACHED
 
-#18 [web 10/16] RUN pnpm install --frozen-lockfile
-#18 CACHED
+#18 [13/16] COPY apps/api/src           ./apps/api/src
+#18 DONE 0.2s
 
-#19 [web 15/16] RUN pnpm --filter @emitech/web build
-#19 CACHED
+#19 [14/16] RUN pnpm --filter @emitech/database exec prisma generate
+#19 7.255 Prisma schema loaded from prisma/schema.prisma
+#19 12.18 
+#19 12.18 ✔ Generated Prisma Client (v5.22.0) to ./../../node_modules/.pnpm/@prisma+client@5.22.0_prisma@5.22.0/node_modules/@prisma/client in 1.37s
+#19 12.18 
+#19 12.18 Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+#19 12.18 
+#19 12.18 Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+#19 12.18 
+#19 DONE 12.8s
 
-#20 [web  8/16] COPY packages/database/prisma             ./packages/database/prisma/
-#20 CACHED
+#20 [15/16] RUN pnpm --filter @emitech/database build
+#20 6.226 
+#20 6.226 > @emitech/database@0.1.0 build /app/packages/database
+#20 6.226 > tsc
+#20 6.226 
+#20 DONE 17.0s
 
-#21 [web  2/16] RUN apk add --no-cache openssl
-#21 CACHED
+#21 [16/16] RUN pnpm --filter @emitech/api build
+#21 3.059 
+#21 3.059 > @emitech/api@0.1.0 build /app/apps/api
+#21 3.059 > tsc
+#21 3.059 
+#21 DONE 29.2s
 
-#22 [web  9/16] COPY apps/web/package.json                ./apps/web/
-#22 CACHED
+#22 exporting to image
+#22 exporting layers
+#22 exporting layers 5.4s done
+#22 exporting manifest sha256:fcf43cd1b389bf41ba036d203dbe23cb4f350694a89c7ed797e5507efad3c111 0.0s done
+#22 exporting config sha256:94a1066f192ec9535d30131d58822b75372c58fd860da0700097b231fae02e5a 0.0s done
+#22 exporting attestation manifest sha256:9c10638fdb3b59269ee85fba0bcd3db579456c5c3e79fe69ebc4c85838b82db4 0.1s done
+#22 exporting manifest list sha256:1313d1042f1027d39bbc42e22d57e4c27384e56a49dc9ddb22743a264cc9e085
+#22 exporting manifest list sha256:1313d1042f1027d39bbc42e22d57e4c27384e56a49dc9ddb22743a264cc9e085 0.0s done
+#22 naming to docker.io/library/app-api:latest 0.0s done
+#22 unpacking to docker.io/library/app-api:latest
+#22 unpacking to docker.io/library/app-api:latest 1.2s done
+#22 DONE 7.1s
 
-#23 [web 16/16] WORKDIR /app/apps/web
-#23 CACHED
-
-#24 [api 10/16] COPY apps/api/tsconfig.json               ./apps/api/
-#24 CACHED
-
-#25 [api  6/16] COPY packages/database/package.json       ./packages/database/
-#25 CACHED
-
-#26 [api 13/16] COPY apps/api/src           ./apps/api/src
-#26 CACHED
-
-#27 [api 14/16] RUN pnpm --filter @emitech/database exec prisma generate
-#27 CACHED
-
-#28 [api 15/16] RUN pnpm --filter @emitech/database build
-#28 CACHED
-
-#16 [api  4/16] WORKDIR /app
-#16 CACHED
-
-#29 [api 12/16] COPY packages/database/src ./packages/database/src
-#29 CACHED
-
-#14 [api  3/16] RUN npm install -g pnpm
-#14 CACHED
-
-#30 [api  5/16] COPY pnpm-workspace.yaml pnpm-lock.yaml package.json turbo.json tsconfig.base.json ./
-#30 CACHED
-
-#31 [api  8/16] COPY packages/database/prisma             ./packages/database/prisma/
-#31 CACHED
-
-#32 [api  7/16] COPY packages/database/tsconfig.json      ./packages/database/
-#32 CACHED
-
-#21 [api  2/16] RUN apk add --no-cache openssl
-#21 CACHED
-
-#33 [api  9/16] COPY apps/api/package.json                ./apps/api/
-#33 CACHED
-
-#34 [api 11/16] RUN pnpm install --frozen-lockfile
-#34 CACHED
-
-#35 [api 16/16] RUN pnpm --filter @emitech/api build
-#35 CACHED
-
-#36 [web] exporting to image
-#36 exporting layers 0.1s done
-#36 exporting manifest sha256:c59b8969621edd7b760801311e8364c75ac18ca217c3c977393ca2f20f381bd6 done
-#36 exporting config sha256:064986e3e87dc2f3a9d8dd8d1b744a9469670e272063e75fee85aa0c32567b82
-#36 exporting config sha256:064986e3e87dc2f3a9d8dd8d1b744a9469670e272063e75fee85aa0c32567b82 done
-#36 exporting attestation manifest sha256:dc4579353bb70d33babbe2ebd7e76b17545e6108786a16e0661ef743a8489a08 0.1s done
-#36 exporting manifest list sha256:bb69527e8d45c59d0c50f3fe994ea6bf4329d214ac9c5e4decafc2f85a5a964e
-#36 exporting manifest list sha256:bb69527e8d45c59d0c50f3fe994ea6bf4329d214ac9c5e4decafc2f85a5a964e 0.0s done
-#36 naming to docker.io/library/app-web:latest 0.0s done
-#36 unpacking to docker.io/library/app-web:latest 0.0s done
-#36 DONE 0.4s
-
-#37 [api] exporting to image
-#37 exporting layers 0.1s done
-#37 exporting manifest sha256:6e0624ba48ba7a8c0e2ddaa2c8c5603c8af5c24814c67bbc722c47618187b486 0.0s done
-#37 exporting config sha256:897f16428baac6746a5bf9bb294278f1d3705a8520e253ad48eafa38e312d3e8 done
-#37 exporting attestation manifest sha256:4023cc197d8ed47ee468824a6b2c70ef04ac12ab50b506b9fbc100639907d86f 0.1s done
-#37 exporting manifest list sha256:dc2aa6d64b6a15e72a4af45b38a6e2b971696ecd2eb2b82cbe0f1b979f8c3828 0.0s done
-#37 naming to docker.io/library/app-api:latest done
-#37 unpacking to docker.io/library/app-api:latest 0.0s done
-#37 DONE 0.5s
-
-#38 [web] resolving provenance for metadata file
-#38 DONE 0.1s
-
-#39 [api] resolving provenance for metadata file
-#39 DONE 0.0s
+#23 resolving provenance for metadata file
+#23 DONE 0.4s
  Image app-api Built 
- Image app-web Built 
  Container app-redis-1 Running 
  Container app-postgres-1 Running 
  Container app-api-1 Recreate 
  Container app-api-1 Recreated 
- Container app-web-1 Recreate 
- Container app-web-1 Recreated 
  Container app-api-1 Starting 
  Container app-api-1 Started 
- Container app-web-1 Starting 
- Container app-web-1 Started 

@@ -40,10 +40,12 @@ services:
       REDIS_URL:                 redis://redis:6379
       JWT_SECRET:                ${JWT_SECRET}
       META_WEBHOOK_VERIFY_TOKEN: ${META_WEBHOOK_VERIFY_TOKEN}
-      META_APP_SECRET:           ${META_APP_SECRET}
+      META_APP_SECRET: ""
       OPENROUTER_API_KEY:        ${OPENROUTER_API_KEY}
-      WOMPI_PUBLIC_KEY:          ${WOMPI_PUBLIC_KEY}
-      WOMPI_EVENTS_SECRET:       ${WOMPI_EVENTS_SECRET}
+      WOMPI_PUBLIC_KEY: "pub_prod_22MfS4ZDgQSLzArIwiPAfsIScFNbZQV1"
+      WOMPI_PRIVATE_KEY: "prv_prod_WfXtbHJk1P5LEO9B5gWMzHRzem3pMlgA"
+      WOMPI_EVENTS_SECRET: "prod_events_M3LBevJykFz6GX2pVjisyD0KuMADulft"
+      WOMPI_INTEGRITY_SECRET: "prod_integrity_5gURYe3tu47Y7qcR6y8WyifjZUJjXgp3"
       WEB_URL:                   ${WEB_URL}
     depends_on:
       - postgres
