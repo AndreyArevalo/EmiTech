@@ -187,6 +187,9 @@ export default function LoginPage() {
         <p className="text-center text-xs mt-6" style={{ color: "#9490b0" }}>
           EmiTech © {new Date().getFullYear()} — Automatización para salones de belleza
         </p>
+        <p className="text-center text-xs mt-1" style={{ color: "rgba(148,144,176,0.5)" }}>
+          Desarrollado por Andrey Arévalo
+        </p>
       </div>
     </div>
   );

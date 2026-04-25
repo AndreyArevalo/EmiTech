@@ -204,6 +204,11 @@ export default function LandingPage() {
         <span className="footer-text">© {new Date().getFullYear()} EmiTech — Automatización para salones de belleza</span>
         <Link href="/login" className="nav-cta" style={{ fontSize: "0.8rem", padding: "7px 18px" }}>Iniciar sesión</Link>
       </footer>
+      <div style={{ textAlign: "center", padding: "12px", fontSize: "0.72rem", color: "rgba(148,144,176,0.4)", borderTop: "1px solid rgba(155,109,255,0.06)", display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+        <span>Desarrollado por Andrey Arévalo</span>
+        <a href="/privacy" style={{ color: "rgba(155,109,255,0.6)", textDecoration: "none" }}>Política de Privacidad</a>
+        <a href="/terms" style={{ color: "rgba(155,109,255,0.6)", textDecoration: "none" }}>Términos de Servicio</a>
+      </div>
     </>
   );
 }

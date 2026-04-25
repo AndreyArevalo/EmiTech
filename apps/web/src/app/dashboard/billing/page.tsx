@@ -154,7 +154,7 @@ export default function BillingPage() {
                 ))}
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <CheckCircle size={14} className="text-brand-500 shrink-0" />
-                  Hasta {plan.maxStaff} estilistas
+                  Hasta {plan.maxStaff} profesionales
                 </div>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <CheckCircle size={14} className="text-brand-500 shrink-0" />
