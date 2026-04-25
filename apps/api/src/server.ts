@@ -81,6 +81,22 @@ async function buildApp() {
   await app.register(dashboardRoutes, { prefix: "/api/dashboard" });
   await app.register(superadminRoutes, { prefix: "/api/admin" });
 
+  // ─── Meta: Data Deletion Callback ────────────────────────────────────────
+  // POST /api/data-deletion — Meta llama esto cuando un usuario pide eliminar sus datos
+  app.post("/api/data-deletion", async (req: any, reply) => {
+    // Meta envía un signed_request en el body
+    const confirmationCode = `DEL-${Date.now()}`;
+    return reply.send({
+      url: `https://emitech.app/delete-data?code=${confirmationCode}`,
+      confirmation_code: confirmationCode,
+    });
+  });
+
+  // GET /api/data-deletion — para verificación de Meta
+  app.get("/api/data-deletion", async (req: any, reply) => {
+    return reply.send({ status: "ok", message: "Data deletion endpoint activo" });
+  });
+
   // ─── Health check ─────────────────────────────────────────────────────────
   app.get("/health", async () => ({
     status: "ok",
