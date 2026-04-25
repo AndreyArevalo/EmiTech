@@ -8,6 +8,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "EmiTech — Gestión de Salones",
   description: "Agenda inteligente y atención automática por WhatsApp para salones de belleza",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/icon-192.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
