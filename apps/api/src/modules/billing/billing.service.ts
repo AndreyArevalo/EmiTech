@@ -26,7 +26,7 @@ export async function createWompiCheckoutUrl(params: {
 
   // Generar firma HMAC SHA256
   const crypto = await import("crypto");
-  const integritySecret = process.env.WOMPI_EVENTS_SECRET || "";
+  const integritySecret = process.env.WOMPI_INTEGRITY_SECRET || "";
   const signatureStr = `${reference}${amountInCents}COP${integritySecret}`;
   const signature = crypto
     .createHash("sha256")

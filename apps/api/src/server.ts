@@ -37,7 +37,8 @@ async function buildApp() {
   await app.register(cors, {
     origin: [
       process.env.WEB_URL || "http://localhost:3000",
-      "https://emitech.co",
+      "https://emitech.app",
+      "https://www.emitech.app",
     ],
     credentials: true,
   });
