@@ -182,14 +182,18 @@ class BaileysSessions extends EventEmitter {
 
     // ─── Recepción de mensajes ───────────────────────────────────────────
     sock.ev.on("messages.upsert", async ({ messages, type }) => {
-      // Solo procesar mensajes nuevos (no histórico)
-      if (type !== "notify") return;
+      console.log(`[BAILEYS] 📨 messages.upsert type="${type}" count=${messages.length} tenant=${tenantId}`);
+
+      // Aceptar "notify" y "append" para mayor compatibilidad
+      if (type !== "notify" && type !== "append") return;
 
       for (const msg of messages) {
         // Ignorar mensajes propios y sin contenido
         if (!msg.message || msg.key.fromMe) continue;
 
         const jid = msg.key.remoteJid || "";
+        console.log(`[BAILEYS] 📩 Mensaje de ${jid} — tipo msg: ${Object.keys(msg.message)[0]}`);
+
         // Solo mensajes individuales (no grupos)
         if (!jid.endsWith("@s.whatsapp.net")) continue;
 
@@ -204,15 +208,22 @@ class BaileysSessions extends EventEmitter {
           rawText = m.conversation;
         } else if (m.extendedTextMessage?.text) {
           rawText = m.extendedTextMessage.text;
+        } else if (m.imageMessage?.caption) {
+          rawText = m.imageMessage.caption;
         } else {
-          // Ignorar imágenes, audios, stickers, etc.
+          console.log(`[BAILEYS] ⏭️ Mensaje no-texto ignorado de ${phone}`);
           continue;
         }
+
+        console.log(`[BAILEYS] 💬 Texto recibido de ${phone}: "${rawText}"`);
 
         // Traducir número → ID antes de pasarlo al bot
         const text = this.translateInput(tenantId, phone, rawText);
 
-        if (!this.messageHandler) continue;
+        if (!this.messageHandler) {
+          console.warn(`[BAILEYS] ⚠️ Sin messageHandler registrado para tenant ${tenantId}`);
+          continue;
+        }
 
         try {
           const botReply = await this.messageHandler(tenantId, phone, text, messageId);
@@ -224,11 +235,12 @@ class BaileysSessions extends EventEmitter {
             // Convertir BotReply a texto y enviar
             const textToSend = renderBotReply(botReply);
             if (textToSend) {
+              console.log(`[BAILEYS] 📤 Enviando respuesta a ${phone}`);
               await sock.sendMessage(jid, { text: textToSend });
             }
           }
         } catch (err: any) {
-          console.error(`[BAILEYS] ❌ Error procesando mensaje de ${phone}:`, err.message);
+          console.error(`[BAILEYS] ❌ Error procesando mensaje de ${phone}:`, err.message, err.stack);
         }
       }
     });
