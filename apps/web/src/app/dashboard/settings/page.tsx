@@ -13,7 +13,7 @@ export default function SettingsPage() {
 
   const [salonForm, setSalonForm] = useState({ name: "", phone: "", address: "", city: "" });
   const [botForm, setBotForm] = useState({
-    welcomeMessage: "", closedMessage: "", confirmMessage: "",
+    welcomeMessage: "", closedMessage: "", confirmMessage: "", rejectMessage: "",
     reminderMessage: "", isOpen: true, requiresConfirm: true, reminderHoursBefore: 2,
   });
   const [slotMins, setSlotMins] = useState(30);
@@ -28,7 +28,8 @@ export default function SettingsPage() {
     setSalonForm({ name: tenant.name || "", phone: tenant.phone || "", address: tenant.address || "", city: tenant.city || "" });
     if (tenant.botConfig) {
       setBotForm({ welcomeMessage: tenant.botConfig.welcomeMessage, closedMessage: tenant.botConfig.closedMessage,
-        confirmMessage: tenant.botConfig.confirmMessage, reminderMessage: tenant.botConfig.reminderMessage,
+        confirmMessage: tenant.botConfig.confirmMessage, rejectMessage: tenant.botConfig.rejectMessage || "",
+        reminderMessage: tenant.botConfig.reminderMessage,
         isOpen: tenant.botConfig.isOpen, requiresConfirm: tenant.botConfig.requiresConfirm,
         reminderHoursBefore: tenant.botConfig.reminderHoursBefore });
     }
@@ -205,7 +206,7 @@ export default function SettingsPage() {
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${botForm.requiresConfirm ? "translate-x-5" : ""}`} />
               </button>
             </div>
-            {[["Mensaje de bienvenida","welcomeMessage"],["Mensaje de bot cerrado","closedMessage"],["Mensaje de confirmación","confirmMessage"]].map(([label, key]) => (
+            {[["Mensaje de bienvenida","welcomeMessage"],["Mensaje de bot cerrado","closedMessage"],["Mensaje de confirmación","confirmMessage"],["Mensaje de rechazo","rejectMessage"]].map(([label, key]) => (
               <div key={key}>
                 <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
                 <textarea value={(botForm as any)[key]} onChange={e => setBotForm(f => ({ ...f, [key]: e.target.value }))}

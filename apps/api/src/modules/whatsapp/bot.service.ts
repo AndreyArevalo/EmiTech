@@ -280,7 +280,7 @@ async function handleAdminAction(
         .replace("{hora}", formatTime(appt.time))
         .replace("{servicio}", appt.service.name);
       try {
-        await baileysSessions.sendText(tenantId, appt.client.phone, msg);
+        await baileysSessions.sendText(tenantId, appt.client.waId || appt.client.phone, msg);
       } catch {}
     }
     return txt(`✅ Cita confirmada:\n${label}`);
@@ -295,11 +295,15 @@ async function handleAdminAction(
 
     // Notificar al cliente via Baileys
     if (baileysSessions.isConnected(tenantId)) {
-      const msg =
-        `Lo sentimos, tu cita del *${formatDateSpanish(appt.date)}* a las *${formatTime(appt.time)}* ` +
-        `no pudo confirmarse. Escríbenos para reagendar. 🙏`;
+      const rejectTpl = tenant?.botConfig?.rejectMessage ||
+        "Lo sentimos, tu cita del *{fecha}* a las *{hora}* no pudo confirmarse. Escríbenos para reagendar. 🙏";
+      const msg = rejectTpl
+        .replace("{nombre}", appt.client.name || "")
+        .replace("{fecha}", formatDateSpanish(appt.date))
+        .replace("{hora}", formatTime(appt.time))
+        .replace("{servicio}", appt.service.name);
       try {
-        await baileysSessions.sendText(tenantId, appt.client.phone, msg);
+        await baileysSessions.sendText(tenantId, appt.client.waId || appt.client.phone, msg);
       } catch {}
     }
     return txt(`❌ Cita rechazada:\n${label}`);
@@ -313,7 +317,8 @@ export async function handleBotMessage(
   tenantId: string,
   phone: string,
   text: string,
-  waMessageId?: string
+  waMessageId?: string,
+  jid?: string
 ): Promise<BotReply | null> {
   const t = text.trim();
   if (!t) return null;
@@ -349,7 +354,10 @@ export async function handleBotMessage(
   // Obtener/crear cliente y conversación
   let client = await prisma.client.findUnique({ where: { tenantId_phone: { tenantId, phone } } });
   if (!client) {
-    client = await prisma.client.create({ data: { tenantId, phone } });
+    client = await prisma.client.create({ data: { tenantId, phone, waId: jid } });
+  } else if (jid && !client.waId) {
+    // Guardar JID completo la primera vez que se conoce (para envíos correctos a @lid)
+    client = await prisma.client.update({ where: { id: client.id }, data: { waId: jid } });
   }
 
   let conv = await prisma.conversation.findUnique({ where: { tenantId_phone: { tenantId, phone } } });

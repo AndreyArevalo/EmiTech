@@ -5,6 +5,8 @@ import { FastifyInstance } from "fastify";
 import { prisma } from "@emitech/database";
 import { z } from "zod";
 import { getAvailableSlots } from "./appointment.service";
+import { baileysSessions } from "../../lib/baileys-manager";
+import { formatTime, formatDateSpanish } from "../../lib/dateUtils";
 
 export async function appointmentRoutes(app: FastifyInstance) {
   const auth = { onRequest: [(app as any).authenticate] };
@@ -98,6 +100,48 @@ export async function appointmentRoutes(app: FastifyInstance) {
       },
       include: { client: true, service: true },
     });
+
+    // Notificar al cliente por WhatsApp si hay sesión activa
+    if (baileysSessions.isConnected(req.user.tenantId)) {
+      const clientJid = updated.client.waId || updated.client.phone;
+      const fecha = formatDateSpanish(updated.date);
+      const hora  = formatTime(updated.time);
+
+      try {
+        if (body.data.status === "CONFIRMED") {
+          const tenant = await prisma.tenant.findUnique({
+            where: { id: req.user.tenantId },
+            include: { botConfig: true },
+          });
+          const tpl = tenant?.botConfig?.confirmMessage ||
+            "✅ ¡Tu cita fue confirmada! Te esperamos el {fecha} a las {hora}. 🌸";
+          const msg = tpl
+            .replace("{nombre}", updated.client.name || "")
+            .replace("{fecha}", fecha)
+            .replace("{hora}", hora)
+            .replace("{servicio}", updated.service.name);
+          await baileysSessions.sendText(req.user.tenantId, clientJid, msg);
+        }
+
+        if (body.data.status === "CANCELLED") {
+          const tenant2 = await prisma.tenant.findUnique({
+            where: { id: req.user.tenantId },
+            include: { botConfig: true },
+          });
+          const rejectTpl = tenant2?.botConfig?.rejectMessage ||
+            "Lo sentimos, tu cita del *{fecha}* a las *{hora}* no pudo confirmarse. Escríbenos para reagendar. 🙏";
+          const msg = rejectTpl
+            .replace("{nombre}", updated.client.name || "")
+            .replace("{fecha}", fecha)
+            .replace("{hora}", hora)
+            .replace("{servicio}", updated.service.name);
+          await baileysSessions.sendText(req.user.tenantId, clientJid, msg);
+        }
+      } catch (err: any) {
+        console.error("[PANEL] Error notificando al cliente:", err.message);
+      }
+    }
+
     return updated;
   });
 

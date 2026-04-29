@@ -73,6 +73,7 @@ model BotConfig {
   welcomeMessage    String  @default("Hola. Bienvenida/o. Que servicio deseas agendar?")
   closedMessage     String  @default("En este momento no estamos disponibles. Te escribimos pronto.")
   confirmMessage    String  @default("Tu cita ha sido registrada. En breve la confirmamos.")
+  rejectMessage     String  @default("Lo sentimos, tu cita no pudo confirmarse. Escríbenos para reagendar. 🙏")
   reminderMessage   String  @default("Hola {nombre}, te recordamos tu cita hoy a las {hora} para {servicio}. Te esperamos.")
   isOpen            Boolean @default(true)
   requiresConfirm   Boolean @default(true)  // admin confirma manualmente o auto

@@ -33,6 +33,7 @@ export async function tenantRoutes(app: FastifyInstance) {
       welcomeMessage: z.string().optional(),
       closedMessage: z.string().optional(),
       confirmMessage: z.string().optional(),
+      rejectMessage: z.string().optional(),
       reminderMessage: z.string().optional(),
       isOpen: z.boolean().optional(),
       requiresConfirm: z.boolean().optional(),
