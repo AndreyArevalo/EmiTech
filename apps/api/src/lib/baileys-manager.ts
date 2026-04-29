@@ -31,7 +31,8 @@ export type MessageHandler = (
   tenantId: string,
   phone: string,
   text: string,
-  messageId: string
+  messageId: string,
+  jid: string          // JID completo: "xxx@s.whatsapp.net" o "xxx@lid"
 ) => Promise<BotReply | null>;
 
 interface TenantSession {
@@ -184,8 +185,9 @@ class BaileysSessions extends EventEmitter {
     sock.ev.on("messages.upsert", async ({ messages, type }) => {
       console.log(`[BAILEYS] 📨 messages.upsert type="${type}" count=${messages.length} tenant=${tenantId}`);
 
-      // Aceptar "notify" y "append" para mayor compatibilidad
-      if (type !== "notify" && type !== "append") return;
+      // Solo "notify" son mensajes nuevos en tiempo real
+      // "append" es historial sincronizado — ignorar para evitar doble procesamiento
+      if (type !== "notify") return;
 
       for (const msg of messages) {
         // Ignorar mensajes propios y sin contenido
@@ -228,7 +230,7 @@ class BaileysSessions extends EventEmitter {
         }
 
         try {
-          const botReply = await this.messageHandler(tenantId, phone, text, messageId);
+          const botReply = await this.messageHandler(tenantId, phone, text, messageId, jid);
 
           if (botReply) {
             // Guardar opciones para la próxima respuesta
@@ -257,14 +259,20 @@ class BaileysSessions extends EventEmitter {
     return { status: session.status, qr: session.qr };
   }
 
-  /** Enviar texto a un número desde la sesión del tenant */
-  async sendText(tenantId: string, phone: string, text: string): Promise<void> {
+  /** Enviar texto a un contacto desde la sesión del tenant.
+   *  `phoneOrJid` puede ser:
+   *   - JID completo: "521234567890@s.whatsapp.net" o "215234283323628@lid"
+   *   - Número limpio: "573001234567" → se convierte a @s.whatsapp.net
+   */
+  async sendText(tenantId: string, phoneOrJid: string, text: string): Promise<void> {
     const session = this.sessions.get(tenantId);
     if (!session?.socket || session.status !== "connected") {
       console.warn(`[BAILEYS] sendText: tenant ${tenantId} no conectado, descartando mensaje`);
-      return; // No lanzar error — recordatorios/notificaciones no deben romper el servidor
+      return;
     }
-    const jid = `${phone.replace(/\D/g, "")}@s.whatsapp.net`;
+    const jid = phoneOrJid.includes("@")
+      ? phoneOrJid
+      : `${phoneOrJid.replace(/\D/g, "")}@s.whatsapp.net`;
     await session.socket.sendMessage(jid, { text });
   }
 

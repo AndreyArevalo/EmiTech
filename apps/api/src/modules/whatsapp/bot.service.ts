@@ -355,8 +355,8 @@ export async function handleBotMessage(
   let client = await prisma.client.findUnique({ where: { tenantId_phone: { tenantId, phone } } });
   if (!client) {
     client = await prisma.client.create({ data: { tenantId, phone, waId: jid } });
-  } else if (jid && !client.waId) {
-    // Guardar JID completo la primera vez que se conoce (para envíos correctos a @lid)
+  } else if (jid && client.waId !== jid) {
+    // Actualizar JID siempre que cambie o estuviera vacío (necesario para @lid)
     client = await prisma.client.update({ where: { id: client.id }, data: { waId: jid } });
   }
 
