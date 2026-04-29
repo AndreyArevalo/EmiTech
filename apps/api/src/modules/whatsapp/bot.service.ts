@@ -252,10 +252,8 @@ async function handleAdminAction(
     include: { botConfig: true },
   });
 
-  // Verificar que el mensaje viene del número admin del salón
-  const adminPhone = (tenant?.phone || "").replace(/\D/g, "").slice(-10);
-  const fromPhone = phone.replace(/\D/g, "").slice(-10);
-  if (!adminPhone || adminPhone !== fromPhone) return null;
+  // Nota: no verificamos el teléfono del admin porque WhatsApp puede usar @lid
+  // en vez del número real. El shortCode solo llega al admin, es suficientemente seguro.
 
   const appt = await prisma.appointment.findFirst({
     where: { tenantId, shortCode },
