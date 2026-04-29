@@ -602,11 +602,12 @@ export async function handleBotMessage(
     if (isYes(t)) {
       const service = await prisma.service.findUnique({ where: { id: convData.serviceId } });
 
-      // Solo actualizar nombre del cliente si aún no tiene uno registrado
+      // Actualizar nombre del cliente con el que dio en esta reserva
+      // Si lo cambia explícitamente, queda guardado el nuevo
       await prisma.client.update({
         where: { id: client.id },
         data: {
-          ...(client.name ? {} : { name: convData.name }),
+          name: convData.name,
           lastVisit: new Date(),
           totalVisits: { increment: 1 },
         },
