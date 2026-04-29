@@ -693,9 +693,7 @@ export async function handleBotMessage(
       });
     }
 
-    return reply(confirmationButtons(
-      "Por favor usa los botones para confirmar o corregir tu cita 😊"
-    ));
+    return reply(txt("No entendí 😊 Responde *si* para confirmar o *no* para corregir."));
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
