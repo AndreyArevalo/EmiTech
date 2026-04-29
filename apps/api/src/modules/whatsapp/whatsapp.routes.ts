@@ -115,6 +115,18 @@ export async function whatsappRoutes(app: FastifyInstance) {
     }
 
     await baileysSessions.sendText(req.user.tenantId, conv.phone, text);
+
+    // Activar humanMode con expiración de 20 minutos
+    const humanModeUntil = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+    const existingData = (conv.data as Record<string, any>) || {};
+    await prisma.conversation.update({
+      where: { id: conv.id },
+      data: {
+        humanMode: true,
+        data: { ...existingData, humanModeUntil },
+      },
+    });
+
     await prisma.message.create({
       data: { conversationId: conv.id, direction: "OUT", content: text },
     });

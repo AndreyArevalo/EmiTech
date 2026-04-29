@@ -12,7 +12,7 @@ import { baileysSessions } from "../../lib/baileys-manager";
 
 // ─── Helpers de texto ─────────────────────────────────────────────────────────
 function isYes(text: string): boolean {
-  return ["sí","si","s","yes","confirmar","confirmo","listo","ok","dale","claro","correcto","exacto","si, confirmar"]
+  return ["sí","si","s","yes","confirmar","confirmado","confirmo","perfecto","listo","ok","okis","dale","claro","correcto","exacto","si, confirmar","de acuerdo","va","bueno"]
     .includes(text.trim().toLowerCase());
 }
 function isNo(text: string): boolean {
@@ -361,7 +361,19 @@ export async function handleBotMessage(
     });
   }
 
-  if (conv.humanMode) return null;
+  // Human mode: si expiró el tiempo (20 min), reactivar el bot automáticamente
+  if (conv.humanMode) {
+    const cd = conv.data as Record<string, any>;
+    const until = cd?.humanModeUntil;
+    if (until && new Date() > new Date(until)) {
+      conv = await prisma.conversation.update({
+        where: { id: conv.id },
+        data: { humanMode: false, data: { ...cd, humanModeUntil: null } },
+      });
+    } else {
+      return null; // Sigue en modo humano
+    }
+  }
 
   // Guardar mensaje entrante
   await prisma.message.create({
