@@ -194,11 +194,13 @@ class BaileysSessions extends EventEmitter {
         const jid = msg.key.remoteJid || "";
         console.log(`[BAILEYS] 📩 Mensaje de ${jid} — tipo msg: ${Object.keys(msg.message)[0]}`);
 
-        // Solo mensajes individuales (no grupos)
-        if (!jid.endsWith("@s.whatsapp.net")) continue;
+        // Aceptar @s.whatsapp.net (número clásico) y @lid (nuevo formato privacidad de WA)
+        // Ignorar grupos (@g.us), broadcasts (status@broadcast) y otros
+        const isIndividual = jid.endsWith("@s.whatsapp.net") || jid.endsWith("@lid");
+        if (!isIndividual || jid === "status@broadcast") continue;
 
-        // Extraer número de teléfono limpio (sin @s.whatsapp.net)
-        const phone = jid.replace("@s.whatsapp.net", "");
+        // Extraer identificador limpio (número o LID)
+        const phone = jid.split("@")[0];
         const messageId = msg.key.id || "";
 
         // Extraer texto del mensaje
