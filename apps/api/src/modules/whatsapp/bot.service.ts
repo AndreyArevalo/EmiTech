@@ -268,7 +268,7 @@ async function handleAdminAction(
   if (action === "confirm") {
     if (appt.status === "CONFIRMED") return txt(`✅ Esta cita ya estaba confirmada.\n${label}`);
     await prisma.appointment.update({
-      where: { id: apptId },
+      where: { id: appt.id },
       data: { status: "CONFIRMED", confirmedAt: new Date() },
     });
 
@@ -291,7 +291,7 @@ async function handleAdminAction(
   if (action === "reject") {
     if (appt.status === "CANCELLED") return txt(`❌ Esta cita ya estaba cancelada.\n${label}`);
     await prisma.appointment.update({
-      where: { id: apptId },
+      where: { id: appt.id },
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
 
