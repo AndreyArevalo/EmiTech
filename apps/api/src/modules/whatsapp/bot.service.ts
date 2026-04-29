@@ -273,7 +273,7 @@ async function handleAdminAction(
     });
 
     // Notificar al cliente via Baileys
-    if (baileysSessions.isConnected(tenantId)) {
+    if (tenant && baileysSessions.isConnected(tenantId)) {
       const tpl = tenant.botConfig?.confirmMessage ||
         "✅ ¡Tu cita fue confirmada! Te esperamos el {fecha} a las {hora}. 🌸";
       const msg = tpl
