@@ -74,8 +74,8 @@ export default function AppointmentsPage() {
                     <p className="text-xs text-gray-400">{appt.service?.duration} min</p>
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{appt.client?.name || "Sin nombre"}</p>
-                    <p className="text-sm text-gray-500">{appt.service?.name} · 📞 {appt.client?.phone}</p>
+                    <p className="font-medium text-gray-900">{appt.guestName || appt.client?.name || "Sin nombre"}</p>
+                    <p className="text-sm text-gray-500">{appt.service?.name}</p>
                   </div>
                   {appt.staff && <p className="text-sm text-gray-400 hidden md:block">{appt.staff.name}</p>}
                   <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>

@@ -139,11 +139,8 @@ export default function DashboardPage() {
                   <p className="text-xs text-gray-400">{appt.date}</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-gray-900 truncate">{appt.client?.name || "Sin nombre"}</p>
-                  <p className="text-sm text-gray-500 truncate">
-                    {appt.service?.name}
-                    {appt.client?.phone && <span> · 📞 {appt.client.phone}</span>}
-                  </p>
+                  <p className="font-medium text-gray-900 truncate">{appt.guestName || appt.client?.name || "Sin nombre"}</p>
+                  <p className="text-sm text-gray-500 truncate">{appt.service?.name}</p>
                 </div>
                 {appt.staff && (
                   <p className="text-sm text-gray-400 hidden md:block shrink-0">{appt.staff.name}</p>
@@ -199,7 +196,7 @@ export default function DashboardPage() {
                     <p className="font-semibold text-gray-900 text-sm">{timeStr}</p>
                   </div>
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900">{appt.client?.name || appt.client?.phone}</p>
+                    <p className="font-medium text-gray-900">{appt.guestName || appt.client?.name || "Sin nombre"}</p>
                     <p className="text-sm text-gray-500">{appt.service?.name}</p>
                   </div>
                   {appt.staff && (

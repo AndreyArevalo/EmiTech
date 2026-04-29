@@ -209,6 +209,7 @@ model Appointment {
   notes       String?
 
   shortCode     Int?              // código corto 1-999 para confirmar/rechazar por WhatsApp
+  guestName     String?           // nombre dado durante la reserva (no sobreescribe el cliente)
   reminderSent  Boolean  @default(false)
   confirmedAt   DateTime?
   cancelledAt   DateTime?

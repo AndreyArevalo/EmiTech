@@ -4,5 +4,8 @@ ALTER TABLE "Tenant" ADD COLUMN "apptCounter" INTEGER NOT NULL DEFAULT 0;
 -- AlterTable: agregar código corto a citas
 ALTER TABLE "Appointment" ADD COLUMN "shortCode" INTEGER;
 
+-- AlterTable: nombre específico de la reserva (independiente del cliente)
+ALTER TABLE "Appointment" ADD COLUMN "guestName" TEXT;
+
 -- CreateIndex: unicidad de shortCode por tenant
 CREATE UNIQUE INDEX "Appointment_tenantId_shortCode_key" ON "Appointment"("tenantId", "shortCode");

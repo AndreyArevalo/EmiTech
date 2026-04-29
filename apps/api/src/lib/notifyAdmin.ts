@@ -32,16 +32,12 @@ export async function notifyAdminNewAppointment(params: NotifyAdminParams): Prom
 
   const body =
     `📌 *Nueva cita #${shortCode} — ${tenant.name}*\n\n` +
-    `👤 ${clientName || "Sin nombre"}\n` +
-    `📞 ${clientPhone}\n` +
+    `👤 ${clientName || "Cliente"}\n` +
     `💅 ${serviceName}\n` +
     `📅 ${formatDateSpanish(dateISO)}\n` +
     `🕒 ${formatTime(time)}\n\n` +
-    `Para *confirmar* responde:\n` +
-    `*confirmar_${shortCode}*\n\n` +
-    `Para *rechazar* responde:\n` +
-    `*rechazar_${shortCode}*\n\n` +
-    `O gestiona desde el panel: /dashboard/appointments`;
+    `*confirmar ${shortCode}* → confirmar\n` +
+    `*rechazar ${shortCode}* → rechazar`;
 
   try {
     await baileysSessions.sendText(tenantId, tenant.phone, body);
