@@ -1,9 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// lib/notifyAdmin.ts — Notificación al admin del salón cuando llega una cita
-// Equivalente mejorado del textoAdmin de procesarCita.js
+// lib/notifyAdmin.ts — Baileys version
+// Notifica al dueño del salón cuando llega una nueva cita.
+// En vez de botones interactivos de Meta, envía texto con instrucciones.
+// El admin puede confirmar/rechazar respondiendo al chat o desde el panel web.
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@emitech/database";
-import { sendButtonMessage, sendTextMessage } from "./meta";
+import { baileysSessions } from "./baileys-manager";
 import { formatTime, formatDateSpanish } from "./dateUtils";
 
 interface NotifyAdminParams {
@@ -21,11 +23,11 @@ export async function notifyAdminNewAppointment(params: NotifyAdminParams): Prom
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
-    select: { phone: true, waPhoneNumberId: true, waAccessToken: true, name: true },
+    select: { phone: true, name: true },
   });
 
-  // Solo notificar si el salón tiene número propio configurado como admin
-  if (!tenant?.phone || !tenant.waPhoneNumberId || !tenant.waAccessToken) return;
+  // Solo notificar si el salón tiene número admin configurado y sesión activa
+  if (!tenant?.phone || !baileysSessions.isConnected(tenantId)) return;
 
   const body =
     `📌 *Nueva cita — ${tenant.name}*\n\n` +
@@ -34,25 +36,15 @@ export async function notifyAdminNewAppointment(params: NotifyAdminParams): Prom
     `💅 ${serviceName}\n` +
     `📅 ${formatDateSpanish(dateISO)}\n` +
     `🕒 ${formatTime(time)}\n\n` +
-    `¿Confirmas esta cita?`;
+    `Para *confirmar* responde exactamente:\n` +
+    `confirm_${appointmentId}\n\n` +
+    `Para *rechazar* responde exactamente:\n` +
+    `reject_${appointmentId}\n\n` +
+    `O gestiona desde el panel: /dashboard/appointments`;
 
   try {
-    await sendButtonMessage(
-      tenant.waPhoneNumberId,
-      tenant.waAccessToken,
-      tenant.phone,
-      body,
-      [
-        { id: `confirm_${appointmentId}`, title: "✅ Confirmar" },
-        { id: `reject_${appointmentId}`, title: "❌ Rechazar" },
-      ]
-    );
+    await baileysSessions.sendText(tenantId, tenant.phone, body);
   } catch (err: any) {
-    // Fallback: texto simple si los botones fallan (ej. número no en WhatsApp Business)
-    console.error("[NOTIFY_ADMIN] Error con botones, intentando texto simple:", err.message);
-    try {
-      await sendTextMessage(tenant.waPhoneNumberId, tenant.waAccessToken, tenant.phone,
-        body + `\n\nResponde CONFIRMAR o RECHAZAR el ID: ${appointmentId.slice(-6).toUpperCase()}`);
-    } catch {}
+    console.error("[NOTIFY_ADMIN] Error enviando notificación:", err.message);
   }
 }

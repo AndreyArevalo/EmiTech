@@ -7,7 +7,8 @@ import { parseDateNatural, formatTime, formatDateSpanish } from "../../lib/dateU
 import { getAvailableSlots } from "../appointments/appointment.service";
 import { askAI } from "../../lib/ai";
 import { notifyAdminNewAppointment } from "../../lib/notifyAdmin";
-import { BotReply, ListSection, sendTextMessage } from "../../lib/meta";
+import { BotReply, ListSection } from "../../lib/meta";
+import { baileysSessions } from "../../lib/baileys-manager";
 
 // ─── Helpers de texto ─────────────────────────────────────────────────────────
 function isYes(text: string): boolean {
@@ -271,8 +272,8 @@ async function handleAdminAction(
       data: { status: "CONFIRMED", confirmedAt: new Date() },
     });
 
-    // Notificar al cliente
-    if (tenant?.waPhoneNumberId && tenant.waAccessToken) {
+    // Notificar al cliente via Baileys
+    if (baileysSessions.isConnected(tenantId)) {
       const tpl = tenant.botConfig?.confirmMessage ||
         "✅ ¡Tu cita fue confirmada! Te esperamos el {fecha} a las {hora}. 🌸";
       const msg = tpl
@@ -281,7 +282,7 @@ async function handleAdminAction(
         .replace("{hora}", formatTime(appt.time))
         .replace("{servicio}", appt.service.name);
       try {
-        await sendTextMessage(tenant.waPhoneNumberId, tenant.waAccessToken, appt.client.phone, msg);
+        await baileysSessions.sendText(tenantId, appt.client.phone, msg);
       } catch {}
     }
     return txt(`✅ Cita confirmada:\n${label}`);
@@ -294,13 +295,13 @@ async function handleAdminAction(
       data: { status: "CANCELLED", cancelledAt: new Date() },
     });
 
-    // Notificar al cliente
-    if (tenant?.waPhoneNumberId && tenant.waAccessToken) {
+    // Notificar al cliente via Baileys
+    if (baileysSessions.isConnected(tenantId)) {
       const msg =
         `Lo sentimos, tu cita del *${formatDateSpanish(appt.date)}* a las *${formatTime(appt.time)}* ` +
         `no pudo confirmarse. Escríbenos para reagendar. 🙏`;
       try {
-        await sendTextMessage(tenant.waPhoneNumberId, tenant.waAccessToken, appt.client.phone, msg);
+        await baileysSessions.sendText(tenantId, appt.client.phone, msg);
       } catch {}
     }
     return txt(`❌ Cita rechazada:\n${label}`);

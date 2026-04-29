@@ -1,101 +1,83 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// modules/whatsapp/whatsapp.routes.ts
-// Webhook Meta Cloud API + endpoints de gestión de conversaciones
+// modules/whatsapp/whatsapp.routes.ts — Baileys version
+// Reemplaza el webhook de Meta por gestión de sesiones Baileys
 // ─────────────────────────────────────────────────────────────────────────────
 import { FastifyInstance } from "fastify";
 import { prisma } from "@emitech/database";
 import { handleBotMessage } from "./bot.service";
-import { sendBotReply, sendTextMessage, markAsRead } from "../../lib/meta";
-import crypto from "crypto";
+import { baileysSessions } from "../../lib/baileys-manager";
+import QRCode from "qrcode";
 
 export async function whatsappRoutes(app: FastifyInstance) {
   const auth = { onRequest: [(app as any).authenticate] };
 
-  // ─── VERIFICACIÓN DEL WEBHOOK (Meta) ─────────────────────────────────────
-  // GET /api/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=xxx&hub.challenge=yyy
-  app.get("/webhook", async (req: any, reply) => {
-    const { "hub.mode": mode, "hub.verify_token": token, "hub.challenge": challenge } = req.query;
-    const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN;
-    if (mode === "subscribe" && token === VERIFY_TOKEN) {
-      return reply.status(200).type("text/plain").send(String(challenge));
+  // Conectar el handler del bot al gestor de sesiones (una sola vez)
+  baileysSessions.setMessageHandler(handleBotMessage);
+
+  // ─── QR: obtener QR para conectar el WhatsApp de un salón ────────────────
+  // GET /api/whatsapp/qr/:tenantId
+  // El panel llama esto para mostrar el QR al dueño del salón.
+  // Respuestas posibles:
+  //   { status: "qr", qrImage: "data:image/png;base64,..." }  ← escanear
+  //   { status: "connected", qrImage: null }                  ← ya conectado
+  //   { status: "connecting", qrImage: null }                 ← esperar y reintentar
+  app.get("/qr/:tenantId", auth, async (req: any, reply) => {
+    const { tenantId } = req.params;
+
+    if (req.user.role !== "SUPERADMIN" && req.user.tenantId !== tenantId) {
+      return reply.status(403).send({ error: "No autorizado" });
     }
-    return reply.status(403).type("text/plain").send("Forbidden");
+
+    const { status, qr } = baileysSessions.getStatus(tenantId);
+
+    if (status === "not_initialized") {
+      // Disparar inicio de sesión y pedir al cliente que reintente en 3s
+      baileysSessions.initSession(tenantId).catch((err) =>
+        app.log.error(err, `[BAILEYS] Error iniciando sesión para ${tenantId}`)
+      );
+      return { status: "connecting", qrImage: null };
+    }
+
+    if (status === "connected") {
+      return { status: "connected", qrImage: null };
+    }
+
+    if (status === "qr" && qr) {
+      const qrImage = await QRCode.toDataURL(qr);
+      return { status: "qr", qrImage };
+    }
+
+    return { status, qrImage: null };
   });
 
-  // ─── RECEPCIÓN DE MENSAJES (Meta webhook) ────────────────────────────────
-  // POST /api/whatsapp/webhook
-  app.post("/webhook", {
-    config: { rawBody: true }, // necesario para validar firma
-  }, async (req: any, reply) => {
-    // Validar firma HMAC (solo en producción y si APP_SECRET está configurado)
-    const appSecret = process.env.META_APP_SECRET || "";
-    if (process.env.NODE_ENV === "production" && appSecret) {
-      const signature = req.headers["x-hub-signature-256"] as string;
-      if (signature) {
-        const rawBody = (req as any).rawBody ?? Buffer.from(JSON.stringify(req.body));
-        const expectedSig = "sha256=" + crypto
-          .createHmac("sha256", appSecret)
-          .update(rawBody)
-          .digest("hex");
-        if (signature !== expectedSig) {
-          return reply.status(401).send("Invalid signature");
-        }
-      }
+  // ─── Status: estado de conexión ──────────────────────────────────────────
+  // GET /api/whatsapp/status/:tenantId
+  app.get("/status/:tenantId", auth, async (req: any, reply) => {
+    const { tenantId } = req.params;
+
+    if (req.user.role !== "SUPERADMIN" && req.user.tenantId !== tenantId) {
+      return reply.status(403).send({ error: "No autorizado" });
     }
 
-    const body = req.body as any;
-    reply.status(200).send("EVENT_RECEIVED"); // responder 200 siempre primero
-
-    try {
-      const entry = body?.entry?.[0];
-      const changes = entry?.changes?.[0];
-      const value = changes?.value;
-
-      if (!value?.messages || value.messages.length === 0) return;
-
-      const phoneNumberId: string = value.metadata?.phone_number_id;
-      const message = value.messages[0];
-
-      // Extraer texto — soporta texto plano e interactivos (botones/lista)
-      let text = "";
-      if (message.type === "text") {
-        text = message.text?.body || "";
-      } else if (message.type === "interactive") {
-        const itype = message.interactive?.type;
-        if (itype === "list_reply") {
-          text = message.interactive.list_reply.id;
-        } else if (itype === "button_reply") {
-          text = message.interactive.button_reply.id;
-        }
-      } else {
-        return; // ignorar otros tipos (imagen, audio, etc.)
-      }
-
-      const from: string = message.from;
-      const messageId: string = message.id;
-
-      // Buscar tenant por phoneNumberId
-      const tenant = await prisma.tenant.findFirst({
-        where: { waPhoneNumberId: phoneNumberId, active: true },
-      });
-      if (!tenant || !tenant.waAccessToken) return;
-
-      // Marcar como leído
-      await markAsRead(phoneNumberId, tenant.waAccessToken, messageId).catch(() => {});
-
-      // Procesar con el bot y enviar respuesta
-      const botReply = await handleBotMessage(tenant.id, from, text, messageId);
-      if (botReply) {
-        await sendBotReply(phoneNumberId, tenant.waAccessToken, from, botReply);
-      }
-    } catch (err) {
-      app.log.error(err, "Error procesando webhook WhatsApp");
-    }
+    const { status } = baileysSessions.getStatus(tenantId);
+    return { tenantId, status, connected: status === "connected" };
   });
 
-  // ─── ENDPOINTS DEL PANEL ─────────────────────────────────────────────────
+  // ─── Desconectar: cerrar sesión de un tenant ──────────────────────────────
+  // DELETE /api/whatsapp/session/:tenantId
+  app.delete("/session/:tenantId", auth, async (req: any, reply) => {
+    const { tenantId } = req.params;
 
-  // GET /api/whatsapp/conversations — Listar conversaciones activas
+    if (req.user.role !== "SUPERADMIN" && req.user.tenantId !== tenantId) {
+      return reply.status(403).send({ error: "No autorizado" });
+    }
+
+    await baileysSessions.removeSession(tenantId);
+    return { ok: true, message: "Sesión cerrada. Escanea el QR para reconectar." };
+  });
+
+  // ─── ENDPOINTS DEL PANEL (sin cambios funcionales) ───────────────────────
+
   app.get("/conversations", auth, async (req: any) =>
     prisma.conversation.findMany({
       where: { tenantId: req.user.tenantId },
@@ -108,7 +90,6 @@ export async function whatsappRoutes(app: FastifyInstance) {
     })
   );
 
-  // GET /api/whatsapp/conversations/:id/messages
   app.get("/conversations/:id/messages", auth, async (req: any, reply) => {
     const conv = await prisma.conversation.findFirst({
       where: { id: req.params.id, tenantId: req.user.tenantId },
@@ -120,7 +101,6 @@ export async function whatsappRoutes(app: FastifyInstance) {
     });
   });
 
-  // POST /api/whatsapp/conversations/:id/send — Admin envía mensaje manual
   app.post("/conversations/:id/send", auth, async (req: any, reply) => {
     const { text } = req.body as { text: string };
     if (!text) return reply.status(400).send({ error: "text requerido" });
@@ -130,19 +110,17 @@ export async function whatsappRoutes(app: FastifyInstance) {
     });
     if (!conv) return reply.status(404).send({ error: "Conversación no encontrada" });
 
-    const tenant = await prisma.tenant.findUnique({ where: { id: req.user.tenantId } });
-    if (!tenant?.waPhoneNumberId || !tenant.waAccessToken) {
-      return reply.status(400).send({ error: "WhatsApp no configurado" });
+    if (!baileysSessions.isConnected(req.user.tenantId)) {
+      return reply.status(400).send({ error: "WhatsApp no conectado. Escanea el QR primero." });
     }
 
-    await sendTextMessage(tenant.waPhoneNumberId, tenant.waAccessToken, conv.phone, text);
+    await baileysSessions.sendText(req.user.tenantId, conv.phone, text);
     await prisma.message.create({
       data: { conversationId: conv.id, direction: "OUT", content: text },
     });
     return { ok: true };
   });
 
-  // PATCH /api/whatsapp/conversations/:id/human-mode — Tomar/liberar control
   app.patch("/conversations/:id/human-mode", auth, async (req: any, reply) => {
     const { humanMode } = req.body as { humanMode: boolean };
     const conv = await prisma.conversation.findFirst({

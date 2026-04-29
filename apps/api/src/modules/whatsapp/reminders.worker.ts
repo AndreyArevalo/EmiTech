@@ -1,11 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // modules/whatsapp/reminders.worker.ts
-// Worker BullMQ: envía recordatorios automáticos de citas
-// Portado y mejorado desde services/recordatorios.js
+// Worker BullMQ: envía recordatorios automáticos de citas — Baileys version
 //
-// Mejoras vs. versión original:
 //   ✅ Multi-tenant (procesa N salones)
-//   ✅ Usa Meta Cloud API (no Baileys)
+//   ✅ Usa Baileys (sin Meta Cloud API)
 //   ✅ Config reminderHoursBefore por salón
 //   ✅ Persiste jobs en Redis (sobrevive reinicios)
 //   ✅ No envía duplicados gracias al campo reminderSent en DB
@@ -13,7 +11,7 @@
 import { Worker, Queue } from "bullmq";
 import IORedis from "ioredis";
 import { prisma } from "@emitech/database";
-import { sendTextMessage } from "../../lib/meta";
+import { baileysSessions } from "../../lib/baileys-manager";
 import { formatTime, formatDateSpanish } from "../../lib/dateUtils";
 import dayjs from "dayjs";
 import timezone from "dayjs/plugin/timezone";
@@ -35,14 +33,14 @@ async function processReminders() {
   const now = dayjs();
   const todayISO = now.format("YYYY-MM-DD");
 
-  // Obtener todos los tenants activos con WhatsApp configurado
+  // Obtener todos los tenants activos con sesión Baileys conectada
   const tenants = await prisma.tenant.findMany({
-    where: { active: true, waPhoneNumberId: { not: null }, waAccessToken: { not: null } },
+    where: { active: true },
     include: { botConfig: true },
   });
 
   for (const tenant of tenants) {
-    if (!tenant.waPhoneNumberId || !tenant.waAccessToken) continue;
+    if (!baileysSessions.isConnected(tenant.id)) continue;
 
     const tz = tenant.timezone || "America/Bogota";
     const nowTz = dayjs().tz(tz);
@@ -83,12 +81,7 @@ async function processReminders() {
           .replace("{fecha}", formatDateSpanish(appt.date));
 
         try {
-          await sendTextMessage(
-            tenant.waPhoneNumberId,
-            tenant.waAccessToken,
-            clientPhone,
-            texto
-          );
+          await baileysSessions.sendText(tenant.id, clientPhone, texto);
 
           // Marcar como enviado para no repetir
           await prisma.appointment.update({
@@ -133,12 +126,11 @@ async function processSubscriptionExpiry() {
     });
     console.log(`[BILLING] ⚠️ Trial vencido — tenant ${sub.tenantId} (${sub.tenant.name})`);
 
-    // Notificar al admin del salón por WhatsApp si tiene número configurado
-    if (sub.tenant.phone && sub.tenant.waPhoneNumberId && sub.tenant.waAccessToken) {
+    // Notificar al admin si tiene sesión Baileys activa
+    if (sub.tenant.phone && baileysSessions.isConnected(sub.tenantId)) {
       try {
-        await sendTextMessage(
-          sub.tenant.waPhoneNumberId,
-          sub.tenant.waAccessToken,
+        await baileysSessions.sendText(
+          sub.tenantId,
           sub.tenant.phone,
           `⚠️ *EmiTech — Tu período de prueba ha vencido*\n\n` +
           `El bot de ${sub.tenant.name} está pausado.\n\n` +
@@ -169,11 +161,10 @@ async function processSubscriptionExpiry() {
     });
     console.log(`[BILLING] ⚠️ Suscripción vencida — tenant ${sub.tenantId} (${sub.tenant.name})`);
 
-    if (sub.tenant.phone && sub.tenant.waPhoneNumberId && sub.tenant.waAccessToken) {
+    if (sub.tenant.phone && baileysSessions.isConnected(sub.tenantId)) {
       try {
-        await sendTextMessage(
-          sub.tenant.waPhoneNumberId,
-          sub.tenant.waAccessToken,
+        await baileysSessions.sendText(
+          sub.tenantId,
           sub.tenant.phone,
           `🔔 *EmiTech — Tu suscripción ha vencido*\n\n` +
           `El bot de ${sub.tenant.name} está pausado.\n\n` +
@@ -207,11 +198,10 @@ async function processSubscriptionExpiry() {
     const isTrial = sub.status === "TRIAL";
     const fecha = dayjs(isTrial ? sub.trialEndsAt! : sub.currentPeriodEnd!).format("D [de] MMMM");
 
-    if (sub.tenant.phone && sub.tenant.waPhoneNumberId && sub.tenant.waAccessToken) {
+    if (sub.tenant.phone && baileysSessions.isConnected(sub.tenantId)) {
       try {
-        await sendTextMessage(
-          sub.tenant.waPhoneNumberId,
-          sub.tenant.waAccessToken,
+        await baileysSessions.sendText(
+          sub.tenantId,
           sub.tenant.phone,
           `✨ *EmiTech — Recordatorio de renovación*\n\n` +
           `Tu ${isTrial ? "período de prueba" : "suscripción"} de *${sub.tenant.name}* vence el *${fecha}*.\n\n` +

@@ -18,6 +18,7 @@ import { whatsappRoutes } from "./modules/whatsapp/whatsapp.routes";
 import { billingRoutes } from "./modules/billing/billing.routes";
 import { dashboardRoutes } from "./modules/dashboard/dashboard.routes";
 import { startRemindersWorker } from "./modules/whatsapp/reminders.worker";
+import { baileysSessions } from "./lib/baileys-manager";
 import { requireActiveSubscription } from "./middlewares/subscription";
 import { superadminRoutes } from "./modules/superadmin/superadmin.routes";
 
@@ -115,10 +116,26 @@ async function start() {
     } else {
       console.warn("[REMINDER] REDIS_URL no configurado — recordatorios desactivados");
     }
+
     const server = await buildApp();
     const port = Number(process.env.PORT) || 3001;
     await server.listen({ port, host: "0.0.0.0" });
     console.log(`🚀 EmiTech API corriendo en http://localhost:${port}`);
+
+    // ─── Baileys: reconectar sesiones persistidas en disco ──────────────────
+    // Si el servidor se reinicia, retoma automáticamente las sesiones que
+    // ya estaban autenticadas (sin necesidad de escanear QR de nuevo).
+    const persistedTenants = baileysSessions.getPersistedTenantIds();
+    if (persistedTenants.length > 0) {
+      console.log(`[BAILEYS] Reconectando ${persistedTenants.length} sesión(es) persistida(s)...`);
+      for (const tenantId of persistedTenants) {
+        baileysSessions.initSession(tenantId).catch((err) =>
+          console.error(`[BAILEYS] Error reconectando tenant ${tenantId}:`, err.message)
+        );
+      }
+    } else {
+      console.log("[BAILEYS] Sin sesiones previas. Cada salón debe escanear su QR.");
+    }
   } catch (err) {
     console.error("Error al iniciar servidor:", err);
     process.exit(1);
