@@ -245,7 +245,7 @@ async function handleAdminAction(
   tenantId: string,
   phone: string,
   action: string,
-  apptId: string
+  shortCode: number
 ): Promise<BotReply | null> {
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
@@ -258,10 +258,10 @@ async function handleAdminAction(
   if (!adminPhone || adminPhone !== fromPhone) return null;
 
   const appt = await prisma.appointment.findFirst({
-    where: { id: apptId, tenantId },
+    where: { tenantId, shortCode },
     include: { client: true, service: true },
   });
-  if (!appt) return txt("❌ Cita no encontrada.");
+  if (!appt) return txt(`❌ Cita #${shortCode} no encontrada.`);
 
   const label = `${appt.client.name || appt.client.phone} · ${formatDateSpanish(appt.date)} ${formatTime(appt.time)}`;
 
@@ -326,11 +326,13 @@ export async function handleBotMessage(
     if (existing) return null;
   }
 
-  // ─── Admin: confirmar/rechazar cita vía botón WhatsApp ───────────────────
-  const adminMatch = t.match(/^(confirmar|rechazar)_(.+)$/);
+  // ─── Admin: confirmar/rechazar cita por código corto ─────────────────────
+  // Formato: "confirmar_42" o "rechazar_42" (código 1-999)
+  const adminMatch = t.match(/^(confirmar|rechazar)_(\d{1,3})$/i);
   if (adminMatch) {
-    const action = adminMatch[1] === "confirmar" ? "confirm" : "reject";
-    return handleAdminAction(tenantId, phone, action, adminMatch[2]);
+    const action = adminMatch[1].toLowerCase() === "confirmar" ? "confirm" : "reject";
+    const shortCode = parseInt(adminMatch[2], 10);
+    return handleAdminAction(tenantId, phone, action, shortCode);
   }
 
   // Cargar tenant + config
@@ -604,6 +606,22 @@ export async function handleBotMessage(
       });
 
       const requiresConfirm = cfg?.requiresConfirm ?? true;
+
+      // Generar código corto 1-999 de forma atómica por tenant
+      const updatedTenant = await prisma.$transaction(async (tx) => {
+        const current = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          select: { apptCounter: true },
+        });
+        const next = ((current?.apptCounter ?? 0) % 999) + 1; // cicla: ...998→999→1→2...
+        return tx.tenant.update({
+          where: { id: tenantId },
+          data: { apptCounter: next },
+          select: { apptCounter: true },
+        });
+      });
+      const shortCode = updatedTenant.apptCounter;
+
       const appt = await prisma.appointment.create({
         data: {
           tenantId,
@@ -614,6 +632,7 @@ export async function handleBotMessage(
           time: convData.time,
           duration: service?.duration ?? 60,
           status: requiresConfirm ? "PENDING" : "CONFIRMED",
+          shortCode,
         },
       });
 
@@ -622,6 +641,7 @@ export async function handleBotMessage(
       notifyAdminNewAppointment({
         tenantId,
         appointmentId: appt.id,
+        shortCode,
         clientName: convData.name,
         clientPhone: phone,
         serviceName: convData.serviceName,

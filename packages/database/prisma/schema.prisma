@@ -47,6 +47,9 @@ model Tenant {
   waAccessToken    String? // Meta: token de acceso (encriptado)
   waBusinessId     String?
 
+  // Contador de citas (códigos cortos 1-999)
+  apptCounter      Int     @default(0)
+
   // Configuración del bot
   botConfig   BotConfig?
 
@@ -205,12 +208,14 @@ model Appointment {
   status      AppointmentStatus @default(PENDING)
   notes       String?
 
+  shortCode     Int?              // código corto 1-999 para confirmar/rechazar por WhatsApp
   reminderSent  Boolean  @default(false)
   confirmedAt   DateTime?
   cancelledAt   DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
+  @@unique([tenantId, shortCode])
   @@index([tenantId])
   @@index([tenantId, date])
   @@index([clientId])

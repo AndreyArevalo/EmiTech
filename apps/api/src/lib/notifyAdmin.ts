@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // lib/notifyAdmin.ts — Baileys version
 // Notifica al dueño del salón cuando llega una nueva cita.
-// En vez de botones interactivos de Meta, envía texto con instrucciones.
-// El admin puede confirmar/rechazar respondiendo al chat o desde el panel web.
+// Usa un código corto numérico (1-999) para confirmar o rechazar.
+// El admin responde: "confirmar_42" o "rechazar_42"
 // ─────────────────────────────────────────────────────────────────────────────
 import { prisma } from "@emitech/database";
 import { baileysSessions } from "./baileys-manager";
@@ -11,6 +11,7 @@ import { formatTime, formatDateSpanish } from "./dateUtils";
 interface NotifyAdminParams {
   tenantId: string;
   appointmentId: string;
+  shortCode: number;
   clientName: string;
   clientPhone: string;
   serviceName: string;
@@ -19,7 +20,7 @@ interface NotifyAdminParams {
 }
 
 export async function notifyAdminNewAppointment(params: NotifyAdminParams): Promise<void> {
-  const { tenantId, appointmentId, clientName, clientPhone, serviceName, dateISO, time } = params;
+  const { tenantId, shortCode, clientName, clientPhone, serviceName, dateISO, time } = params;
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
@@ -30,16 +31,16 @@ export async function notifyAdminNewAppointment(params: NotifyAdminParams): Prom
   if (!tenant?.phone || !baileysSessions.isConnected(tenantId)) return;
 
   const body =
-    `📌 *Nueva cita — ${tenant.name}*\n\n` +
+    `📌 *Nueva cita #${shortCode} — ${tenant.name}*\n\n` +
     `👤 ${clientName || "Sin nombre"}\n` +
     `📞 ${clientPhone}\n` +
     `💅 ${serviceName}\n` +
     `📅 ${formatDateSpanish(dateISO)}\n` +
     `🕒 ${formatTime(time)}\n\n` +
-    `Para *confirmar* responde exactamente:\n` +
-    `confirmar_${appointmentId}\n\n` +
-    `Para *rechazar* responde exactamente:\n` +
-    `rechazar_${appointmentId}\n\n` +
+    `Para *confirmar* responde:\n` +
+    `*confirmar_${shortCode}*\n\n` +
+    `Para *rechazar* responde:\n` +
+    `*rechazar_${shortCode}*\n\n` +
     `O gestiona desde el panel: /dashboard/appointments`;
 
   try {
