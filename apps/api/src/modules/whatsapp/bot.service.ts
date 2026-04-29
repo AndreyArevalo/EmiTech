@@ -328,7 +328,7 @@ export async function handleBotMessage(
 
   // ─── Admin: confirmar/rechazar cita por código corto ─────────────────────
   // Formato: "confirmar_42" o "rechazar_42" (código 1-999)
-  const adminMatch = t.match(/^(confirmar|rechazar)_(\d{1,3})$/i);
+  const adminMatch = t.match(/^(confirmar|rechazar)[\s_](\d{1,3})$/i);
   if (adminMatch) {
     const action = adminMatch[1].toLowerCase() === "confirmar" ? "confirm" : "reject";
     const shortCode = parseInt(adminMatch[2], 10);
@@ -571,10 +571,12 @@ export async function handleBotMessage(
     }
 
     const newData = { ...convData, time: slot } as Record<string, any>;
-    // Si ya tenemos el nombre (corrección de fecha/hora), saltar directo a confirmación
-    if (newData.name) {
-      await updateStep("esperando_confirmacion", newData);
-      return reply(confirmationButtons(buildResumen(newData)));
+    // Usar nombre ya guardado (de cita anterior o corrección en curso)
+    const bookingName = newData.name || client.name;
+    if (bookingName) {
+      const d = { ...newData, name: bookingName };
+      await updateStep("esperando_confirmacion", d);
+      return reply(confirmationButtons(buildResumen(d)));
     }
 
     await updateStep("esperando_nombre", newData);
@@ -600,9 +602,14 @@ export async function handleBotMessage(
     if (isYes(t)) {
       const service = await prisma.service.findUnique({ where: { id: convData.serviceId } });
 
+      // Solo actualizar nombre del cliente si aún no tiene uno registrado
       await prisma.client.update({
         where: { id: client.id },
-        data: { name: convData.name, lastVisit: new Date(), totalVisits: { increment: 1 } },
+        data: {
+          ...(client.name ? {} : { name: convData.name }),
+          lastVisit: new Date(),
+          totalVisits: { increment: 1 },
+        },
       });
 
       const requiresConfirm = cfg?.requiresConfirm ?? true;
@@ -633,6 +640,7 @@ export async function handleBotMessage(
           duration: service?.duration ?? 60,
           status: requiresConfirm ? "PENDING" : "CONFIRMED",
           shortCode,
+          guestName: convData.name, // nombre específico de esta reserva
         },
       });
 
