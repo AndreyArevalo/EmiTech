@@ -1,9 +1,9 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tenantApi } from "@/lib/api";
+import { tenantApi, whatsappApi } from "@/lib/api";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { Save, Store, Bot, Clock, Smartphone, KeyRound, Eye, EyeOff } from "lucide-react";
+import { Save, Store, Bot, Clock, Smartphone, KeyRound, Eye, EyeOff, RefreshCw, Unlink, CheckCircle2, Loader2 } from "lucide-react";
 
 const DAYS = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
 
@@ -16,7 +16,6 @@ export default function SettingsPage() {
     welcomeMessage: "", closedMessage: "", confirmMessage: "",
     reminderMessage: "", isOpen: true, requiresConfirm: true, reminderHoursBefore: 2,
   });
-  const [waForm, setWaForm] = useState({ waPhoneNumberId: "", waAccessToken: "", waBusinessId: "" });
   const [slotMins, setSlotMins] = useState(30);
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [showPw, setShowPw] = useState(false);
@@ -33,7 +32,6 @@ export default function SettingsPage() {
         isOpen: tenant.botConfig.isOpen, requiresConfirm: tenant.botConfig.requiresConfirm,
         reminderHoursBefore: tenant.botConfig.reminderHoursBefore });
     }
-    setWaForm({ waPhoneNumberId: tenant.waPhoneNumberId || "", waAccessToken: tenant.waAccessToken || "", waBusinessId: tenant.waBusinessId || "" });
     if (tenant.workingHours?.length) {
       const filled = DAYS.map((_, i) => {
         const wh = tenant.workingHours.find((h: any) => h.dayOfWeek === i && !h.staffId);
@@ -49,7 +47,6 @@ export default function SettingsPage() {
 
   const saveSalon = useMutation({ mutationFn: () => tenantApi.update(salonForm), onSuccess: () => { qc.invalidateQueries({ queryKey: ["tenant-me"] }); toast.success("Datos guardados"); } });
   const saveBot = useMutation({ mutationFn: () => tenantApi.updateBotConfig(botForm), onSuccess: () => { qc.invalidateQueries({ queryKey: ["tenant-me"] }); toast.success("Bot configurado"); } });
-  const saveWa = useMutation({ mutationFn: () => tenantApi.updateWhatsapp(waForm), onSuccess: () => toast.success("WhatsApp conectado") });
   const changePassword = useMutation({
     mutationFn: () => {
       if (pwForm.newPassword !== pwForm.confirmPassword) {
@@ -97,7 +94,9 @@ export default function SettingsPage() {
                 <input type={type} value={(salonForm as any)[key]} onChange={e => setSalonForm(f => ({ ...f, [key]: e.target.value }))}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
                 {key === "phone" && (
-                  <p className="text-xs text-gray-400 mt-1">📲 Recibe notificaciones y botones de confirmar/rechazar citas por WhatsApp (formato internacional: +573001234567)</p>
+                  <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                    📲 Recibirás una notificación por WhatsApp cada vez que llegue una cita nueva. Para confirmarla responde <span className="font-mono bg-gray-100 px-1 rounded">confirmar_ID</span> y para rechazarla <span className="font-mono bg-gray-100 px-1 rounded">rechazar_ID</span> — el ID aparece en el mensaje. También puedes gestionarlo desde el panel en Citas. (Formato internacional: +573001234567)
+                  </p>
                 )}
               </div>
             ))}
@@ -220,27 +219,8 @@ export default function SettingsPage() {
           </button>
         </section>
 
-        {/* WhatsApp Meta API */}
-        <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-          <div className="flex items-center gap-2 mb-1">
-            <Smartphone size={18} className="text-green-500" />
-            <h2 className="font-semibold text-gray-900">Conexión WhatsApp (Meta)</h2>
-          </div>
-          <p className="text-xs text-gray-400 mb-4">Obtén estos datos en <a href="https://developers.facebook.com" target="_blank" className="text-brand-500 underline">Meta for Developers</a></p>
-          <div className="space-y-3">
-            {[["Phone Number ID","waPhoneNumberId"],["Access Token","waAccessToken"],["Business ID","waBusinessId"]].map(([label, key]) => (
-              <div key={key}>
-                <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-                <input type="text" value={(waForm as any)[key]} onChange={e => setWaForm(f => ({ ...f, [key]: e.target.value }))}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
-              </div>
-            ))}
-          </div>
-          <button onClick={() => saveWa.mutate()} disabled={saveWa.isPending}
-            className="mt-4 flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-            <Save size={14} /> {saveWa.isPending ? "Guardando..." : "Conectar WhatsApp"}
-          </button>
-        </section>
+        {/* WhatsApp — Conexión QR (Baileys) */}
+        {tenant && <WhatsAppQRSection tenantId={tenant.id} />}
 
         {/* Cambiar contraseña */}
         <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
@@ -303,5 +283,114 @@ export default function SettingsPage() {
         </section>
       </div>
     </div>
+  );
+}
+
+// ─── Componente: Conexión WhatsApp por QR ─────────────────────────────────────
+function WhatsAppQRSection({ tenantId }: { tenantId: string }) {
+  const qc = useQueryClient();
+
+  // Consulta el estado/QR cada 3 segundos mientras no esté conectado
+  const { data, isLoading } = useQuery({
+    queryKey: ["wa-qr", tenantId],
+    queryFn: () => whatsappApi.qr(tenantId),
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      return status === "connected" ? false : 3000;
+    },
+  });
+
+  const disconnect = useMutation({
+    mutationFn: () => whatsappApi.disconnect(tenantId),
+    onSuccess: () => {
+      toast.success("WhatsApp desconectado");
+      qc.invalidateQueries({ queryKey: ["wa-qr", tenantId] });
+    },
+    onError: () => toast.error("Error al desconectar"),
+  });
+
+  const status: string = data?.status ?? "not_initialized";
+  const qrImage: string | null = data?.qrImage ?? null;
+  const connected = status === "connected";
+
+  return (
+    <section className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <Smartphone size={18} className="text-green-500" />
+          <h2 className="font-semibold text-gray-900">Conexión WhatsApp</h2>
+        </div>
+        {/* Badge de estado */}
+        {connected ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-50 px-2.5 py-1 rounded-full">
+            <CheckCircle2 size={12} /> Conectado
+          </span>
+        ) : status === "qr" ? (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
+            <Loader2 size={12} className="animate-spin" /> Esperando escaneo
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-xs font-medium text-gray-400 bg-gray-50 px-2.5 py-1 rounded-full">
+            <Loader2 size={12} className={status === "connecting" ? "animate-spin" : ""} />
+            {status === "connecting" ? "Conectando..." : "Desconectado"}
+          </span>
+        )}
+      </div>
+      <p className="text-xs text-gray-400 mb-5">
+        Conecta el número de WhatsApp de tu salón escaneando el código QR con la app.
+      </p>
+
+      {/* Conectado */}
+      {connected && (
+        <div className="flex flex-col items-center gap-4 py-4">
+          <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
+            <CheckCircle2 size={36} className="text-green-500" />
+          </div>
+          <div className="text-center">
+            <p className="font-medium text-gray-900">¡WhatsApp conectado!</p>
+            <p className="text-sm text-gray-400 mt-1">El bot ya está activo y recibiendo mensajes.</p>
+          </div>
+          <button
+            onClick={() => disconnect.mutate()}
+            disabled={disconnect.isPending}
+            className="flex items-center gap-2 border border-red-200 text-red-500 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-60"
+          >
+            <Unlink size={14} />
+            {disconnect.isPending ? "Desconectando..." : "Desconectar número"}
+          </button>
+        </div>
+      )}
+
+      {/* Mostrando QR */}
+      {!connected && status === "qr" && qrImage && (
+        <div className="flex flex-col items-center gap-4">
+          <div className="border-2 border-gray-100 rounded-2xl p-3 bg-white shadow-sm">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={qrImage} alt="QR WhatsApp" className="w-56 h-56" />
+          </div>
+          <div className="text-center max-w-xs">
+            <p className="text-sm font-medium text-gray-700">Escanea con WhatsApp</p>
+            <p className="text-xs text-gray-400 mt-1">
+              Abre WhatsApp → Dispositivos vinculados → Vincular dispositivo → Escanea este código
+            </p>
+          </div>
+          <p className="text-xs text-gray-300 flex items-center gap-1">
+            <RefreshCw size={10} /> Actualizando automáticamente...
+          </p>
+        </div>
+      )}
+
+      {/* Cargando / conectando */}
+      {!connected && status !== "qr" && (
+        <div className="flex flex-col items-center gap-3 py-6 text-gray-400">
+          <Loader2 size={32} className={`${status === "connecting" || status === "not_initialized" ? "animate-spin" : ""} text-gray-300`} />
+          <p className="text-sm">
+            {isLoading || status === "connecting" || status === "not_initialized"
+              ? "Iniciando sesión, el QR aparecerá en unos segundos..."
+              : "Sin conexión. El QR aparecerá pronto."}
+          </p>
+        </div>
+      )}
+    </section>
   );
 }

@@ -37,9 +37,9 @@ export async function notifyAdminNewAppointment(params: NotifyAdminParams): Prom
     `📅 ${formatDateSpanish(dateISO)}\n` +
     `🕒 ${formatTime(time)}\n\n` +
     `Para *confirmar* responde exactamente:\n` +
-    `confirm_${appointmentId}\n\n` +
+    `confirmar_${appointmentId}\n\n` +
     `Para *rechazar* responde exactamente:\n` +
-    `reject_${appointmentId}\n\n` +
+    `rechazar_${appointmentId}\n\n` +
     `O gestiona desde el panel: /dashboard/appointments`;
 
   try {

@@ -76,4 +76,8 @@ export const whatsappApi = {
   messages: (id: string) => api.get(`/api/whatsapp/conversations/${id}/messages`).then(r => r.data),
   send: (id: string, text: string) => api.post(`/api/whatsapp/conversations/${id}/send`, { text }).then(r => r.data),
   setHumanMode: (id: string, humanMode: boolean) => api.patch(`/api/whatsapp/conversations/${id}/human-mode`, { humanMode }).then(r => r.data),
+  // Baileys: conexión QR
+  qr: (tenantId: string) => api.get(`/api/whatsapp/qr/${tenantId}`).then(r => r.data),
+  status: (tenantId: string) => api.get(`/api/whatsapp/status/${tenantId}`).then(r => r.data),
+  disconnect: (tenantId: string) => api.delete(`/api/whatsapp/session/${tenantId}`).then(r => r.data),
 };

@@ -327,9 +327,10 @@ export async function handleBotMessage(
   }
 
   // ─── Admin: confirmar/rechazar cita vía botón WhatsApp ───────────────────
-  const adminMatch = t.match(/^(confirm|reject)_(.+)$/);
+  const adminMatch = t.match(/^(confirmar|rechazar)_(.+)$/);
   if (adminMatch) {
-    return handleAdminAction(tenantId, phone, adminMatch[1], adminMatch[2]);
+    const action = adminMatch[1] === "confirmar" ? "confirm" : "reject";
+    return handleAdminAction(tenantId, phone, action, adminMatch[2]);
   }
 
   // Cargar tenant + config
