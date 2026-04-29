@@ -653,6 +653,7 @@ export async function handleBotMessage(
         clientName: convData.name,
         clientPhone: phone,
         serviceName: convData.serviceName,
+        staffName: convData.staffName ?? null,
         dateISO: convData.dateISO,
         time: convData.time,
       }).catch(() => {});

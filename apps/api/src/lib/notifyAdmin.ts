@@ -15,12 +15,13 @@ interface NotifyAdminParams {
   clientName: string;
   clientPhone: string;
   serviceName: string;
+  staffName?: string | null;
   dateISO: string;
   time: string;
 }
 
 export async function notifyAdminNewAppointment(params: NotifyAdminParams): Promise<void> {
-  const { tenantId, shortCode, clientName, clientPhone, serviceName, dateISO, time } = params;
+  const { tenantId, shortCode, clientName, clientPhone, serviceName, staffName, dateISO, time } = params;
 
   const tenant = await prisma.tenant.findUnique({
     where: { id: tenantId },
@@ -34,6 +35,7 @@ export async function notifyAdminNewAppointment(params: NotifyAdminParams): Prom
     `📌 *Nueva cita #${shortCode} — ${tenant.name}*\n\n` +
     `👤 ${clientName || "Cliente"}\n` +
     `💅 ${serviceName}\n` +
+    (staffName ? `✂️ ${staffName}\n` : "") +
     `📅 ${formatDateSpanish(dateISO)}\n` +
     `🕒 ${formatTime(time)}\n\n` +
     `*confirmar ${shortCode}* → confirmar\n` +
