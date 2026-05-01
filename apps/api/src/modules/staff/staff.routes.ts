@@ -42,4 +42,48 @@ export async function staffRoutes(app: FastifyInstance) {
     });
     return { ok: true };
   });
+
+  // GET /api/staff/:id/hours — horario del profesional
+  app.get("/:id/hours", auth, async (req: any) => {
+    const hours = await prisma.workingHours.findMany({
+      where: { staffId: req.params.id, tenantId: req.user.tenantId },
+      orderBy: { dayOfWeek: "asc" },
+    });
+    return hours;
+  });
+
+  // PUT /api/staff/:id/hours — guardar horario del profesional
+  // Enviar array vacío [] para borrar (usar horario del salón)
+  app.put("/:id/hours", auth, async (req: any, reply) => {
+    const schema = z.array(z.object({
+      dayOfWeek: z.number().min(0).max(6),
+      openTime:  z.string(),
+      closeTime: z.string(),
+      isOpen:    z.boolean(),
+    }));
+    const body = schema.safeParse(req.body);
+    if (!body.success) return reply.status(400).send({ error: "Datos inválidos" });
+
+    // Borrar horarios actuales del staff
+    await prisma.workingHours.deleteMany({
+      where: { staffId: req.params.id, tenantId: req.user.tenantId },
+    });
+
+    // Si viene array vacío → usa horario del salón (sin registros propios)
+    if (body.data.length === 0) return { ok: true, mode: "salon" };
+
+    // Crear los nuevos horarios
+    await prisma.workingHours.createMany({
+      data: body.data.map(d => ({
+        tenantId:  req.user.tenantId,
+        staffId:   req.params.id,
+        dayOfWeek: d.dayOfWeek,
+        openTime:  d.openTime,
+        closeTime: d.closeTime,
+        isOpen:    d.isOpen,
+        slotMins:  30,
+      })),
+    });
+    return { ok: true, mode: "custom" };
+  });
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { appointmentsApi } from "@/lib/api";
-import { useState } from "react";
+import { appointmentsApi, tenantApi } from "@/lib/api";
+import { useState, useRef } from "react";
 import { CheckCircle, XCircle, Calendar, List, ChevronLeft, ChevronRight } from "lucide-react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
@@ -26,8 +26,35 @@ const CARD_COLORS: Record<string, string> = {
   NO_SHOW:   "border-l-gray-400 bg-gray-50 opacity-60",
 };
 
-// Horas visibles en el grid (7am → 9pm)
-const HOURS = Array.from({ length: 15 }, (_, i) => i + 7);
+// HOURS se calcula dinámicamente según el horario del salón (ver hook abajo)
+
+// ─── Tooltip flotante ──────────────────────────────────────────────────────────
+function ApptTooltip({ appt, formatTime }: { appt: any; formatTime: (t: string) => string }) {
+  const status = STATUS_MAP[appt.status] || STATUS_MAP.PENDING;
+  return (
+    <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 bg-gray-900 text-white rounded-xl shadow-xl p-3 pointer-events-none"
+      style={{ fontSize: "12px" }}>
+      {/* Triángulo */}
+      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+
+      <p className="font-semibold text-white truncate">{appt.client?.name || "Sin nombre"}</p>
+      {appt.client?.phone && (
+        <p className="text-gray-400 mt-0.5">📞 {appt.client.phone}</p>
+      )}
+      <div className="border-t border-gray-700 my-2" />
+      <p className="text-gray-200">💅 {appt.service?.name}</p>
+      <p className="text-gray-400">{appt.service?.duration} min · {formatTime(appt.time)}</p>
+      {appt.staff && (
+        <p className="text-gray-400 mt-1">👤 {appt.staff.name}</p>
+      )}
+      <div className="mt-2">
+        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${status.color}`}>
+          {status.label}
+        </span>
+      </div>
+    </div>
+  );
+}
 
 function formatTime(time24: string) {
   const [h, m] = time24.split(":").map(Number);
@@ -71,6 +98,7 @@ export default function AppointmentsPage() {
     onError: () => toast.error("Error al actualizar la cita"),
   });
 
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const weekDays = Array.from({ length: 7 }, (_, i) => weekStart.add(i, "day"));
 
   const apptsByDate: Record<string, any[]> = {};
@@ -280,11 +308,18 @@ export default function AppointmentsPage() {
                         const top = topPx(appt.time);
                         const height = Math.max(appt.service?.duration || 30, 28);
                         const cardColor = CARD_COLORS[appt.status] || CARD_COLORS.PENDING;
+                        const isHovered = hoveredId === appt.id;
                         return (
                           <div key={appt.id}
-                            className={`absolute left-0.5 right-0.5 rounded-md border-l-4 px-1.5 py-0.5 overflow-hidden select-none ${cardColor}`}
-                            style={{ top: `${top}px`, height: `${height}px`, zIndex: 2 }}
-                            title={`${appt.client?.name} — ${appt.service?.name} (${formatTime(appt.time)})`}>
+                            className={`absolute left-0.5 right-0.5 rounded-md border-l-4 px-1.5 py-0.5 overflow-visible select-none cursor-pointer transition-shadow ${cardColor} ${isHovered ? "shadow-lg ring-1 ring-gray-300" : ""}`}
+                            style={{ top: `${top}px`, height: `${height}px`, zIndex: isHovered ? 20 : 2 }}
+                            onMouseEnter={() => setHoveredId(appt.id)}
+                            onMouseLeave={() => setHoveredId(null)}
+                            onClick={() => setHoveredId(isHovered ? null : appt.id)}
+                          >
+                            {/* Tooltip */}
+                            {isHovered && <ApptTooltip appt={appt} formatTime={formatTime} />}
+
                             <p className="text-xs font-semibold text-gray-800 leading-tight truncate">
                               {formatTime(appt.time)} {appt.client?.name || "Sin nombre"}
                             </p>

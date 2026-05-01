@@ -50,6 +50,8 @@ export const staffApi = {
   list: () => api.get("/api/staff").then(r => r.data),
   create: (data: any) => api.post("/api/staff", data).then(r => r.data),
   delete: (id: string) => api.delete(`/api/staff/${id}`).then(r => r.data),
+  getHours: (id: string) => api.get(`/api/staff/${id}/hours`).then(r => r.data),
+  saveHours: (id: string, data: any[]) => api.put(`/api/staff/${id}/hours`, data).then(r => r.data),
 };
 
 export const clientsApi = {
