@@ -236,7 +236,9 @@ function buildResumen(d: Record<string, any>): string {
     (d.staffName ? `✂️ Profesional: ${d.staffName}\n` : "") +
     `📅 Fecha: ${formatDateSpanish(d.dateISO)}\n` +
     `🕒 Hora: ${formatTime(d.time)}\n\n` +
-    `¿Todo correcto?`
+    `¿Todo correcto?\n\n` +
+    `Responde *si* para confirmar o *no* para corregir.\n` +
+    `Escribe *cancelar* para empezar de nuevo.`
   );
 }
 
@@ -407,6 +409,15 @@ export async function handleBotMessage(
   }
 
   const convData = conv.data as Record<string, any>;
+
+  // ─── CANCELAR — en cualquier paso del flujo ──────────────────────────────
+  const isCancelWord = ["cancelar","cancel","salir","volver","volver al inicio","reiniciar"]
+    .includes(t.trim().toLowerCase());
+
+  if (isCancelWord && conv.step !== "inicio") {
+    await updateStep("inicio", {});
+    return reply(txt("Proceso cancelado 👌\n\nSi deseas agendar una nueva cita escribe *hola* o *menu*."));
+  }
 
   // ─── RESET / INICIO ───────────────────────────────────────────────────────
   // Bienvenida si: el usuario escribió un saludo explícito (isReset)
@@ -676,9 +687,25 @@ export async function handleBotMessage(
         time: convData.time,
       }).catch(() => {});
 
-      const confirmMsg = cfg?.confirmMessage ??
-        "✅ ¡Tu solicitud fue registrada! En breve te confirmamos tu cita. 🌸\n\nSi necesitas algo más, escribe *menu*.";
-      return reply(txt(confirmMsg));
+      // Pequeño delay para evitar colisión con mensajes rápidos en Baileys
+      await new Promise(r => setTimeout(r, 800));
+
+      if (requiresConfirm) {
+        // Admin debe confirmar manualmente → mensaje de espera
+        const pendingMsg = cfg?.confirmMessage ??
+          "✅ ¡Tu solicitud fue registrada! En breve te confirmamos tu cita. 🌸\n\nSi necesitas algo más, escribe *menu*.";
+        return reply(txt(pendingMsg));
+      } else {
+        // Auto-confirmada → mensaje de confirmación con detalles
+        const autoMsg =
+          `✅ *¡Tu cita está confirmada!*\n\n` +
+          `💅 ${convData.serviceName}\n` +
+          `📅 ${formatDateSpanish(convData.dateISO)}\n` +
+          `🕒 ${formatTime(convData.time)}\n` +
+          (convData.staffName ? `✂️ ${convData.staffName}\n` : "") +
+          `\n¡Te esperamos! 🌸\n\nSi necesitas algo más, escribe *menu*.`;
+        return reply(txt(autoMsg));
+      }
     }
 
     if (isNo(t)) {
