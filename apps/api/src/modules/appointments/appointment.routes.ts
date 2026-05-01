@@ -11,15 +11,21 @@ import { formatTime, formatDateSpanish } from "../../lib/dateUtils";
 export async function appointmentRoutes(app: FastifyInstance) {
   const auth = { onRequest: [(app as any).authenticate] };
 
-  // GET /api/appointments?date=2026-04-25&staffId=xxx
+  // GET /api/appointments?date=2026-04-25&staffId=xxx&dateFrom=xxx&dateTo=xxx&status=xxx
   app.get("/", auth, async (req: any) => {
-    const { date, staffId, status } = req.query as any;
+    const { date, staffId, status, dateFrom, dateTo } = req.query as any;
     const { tenantId } = req.user;
+
+    const dateFilter = dateFrom && dateTo
+      ? { date: { gte: dateFrom, lte: dateTo } }
+      : date
+        ? { date }
+        : {};
 
     return prisma.appointment.findMany({
       where: {
         tenantId,
-        ...(date && { date }),
+        ...dateFilter,
         ...(staffId && { staffId }),
         ...(status && { status }),
       },
@@ -109,17 +115,13 @@ export async function appointmentRoutes(app: FastifyInstance) {
 
       try {
         if (body.data.status === "CONFIRMED") {
-          const tenant = await prisma.tenant.findUnique({
-            where: { id: req.user.tenantId },
-            include: { botConfig: true },
-          });
-          const tpl = tenant?.botConfig?.confirmMessage ||
-            "✅ ¡Tu cita fue confirmada! Te esperamos el {fecha} a las {hora}. 🌸";
-          const msg = tpl
-            .replace("{nombre}", updated.client.name || "")
-            .replace("{fecha}", fecha)
-            .replace("{hora}", hora)
-            .replace("{servicio}", updated.service.name);
+          // Mensaje de confirmación por el admin — siempre incluye fecha y hora
+          const msg =
+            `✅ ¡Tu cita fue confirmada!\n\n` +
+            `💅 ${updated.service.name}\n` +
+            `📅 ${fecha}\n` +
+            `🕒 ${hora}\n\n` +
+            `¡Te esperamos! 🌸`;
           await baileysSessions.sendText(req.user.tenantId, clientJid, msg);
         }
 

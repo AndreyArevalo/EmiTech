@@ -54,7 +54,7 @@ async function processReminders() {
         status: "CONFIRMED",
         reminderSent: false,
       },
-      include: { client: true, service: true },
+      include: { client: true, service: true, staff: true },
     });
 
     for (const appt of appointments) {
@@ -81,7 +81,24 @@ async function processReminders() {
           .replace("{fecha}", formatDateSpanish(appt.date));
 
         try {
+          // Recordatorio al cliente
           await baileysSessions.sendText(tenant.id, clientPhone, texto);
+
+          // Recordatorio a la profesional (si tiene teléfono registrado)
+          if (appt.staff?.phone) {
+            const staffMsg =
+              `📅 *Recordatorio de cita*\n\n` +
+              `Tienes una cita hoy a las *${formatTime(appt.time)}*\n` +
+              `👤 Cliente: ${appt.client.name || appt.client.phone}\n` +
+              `💅 Servicio: ${appt.service.name}\n\n` +
+              `¡Que te vaya excelente! 🌸`;
+            try {
+              await baileysSessions.sendText(tenant.id, appt.staff.phone, staffMsg);
+              console.log(`[REMINDER] ✅ Enviado a profesional ${appt.staff.phone} (${appt.staff.name})`);
+            } catch (staffErr: any) {
+              console.error(`[REMINDER] ⚠️ Error notificando a profesional ${appt.staff.name}:`, staffErr.message);
+            }
+          }
 
           // Marcar como enviado para no repetir
           await prisma.appointment.update({
