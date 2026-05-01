@@ -99,6 +99,23 @@ export default function AppointmentsPage() {
   });
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+
+  // Horario del salón para calcular rango del grid
+  const { data: tenant } = useQuery({
+    queryKey: ["tenant-me"],
+    queryFn: tenantApi.me,
+  });
+
+  // Calcular hora mínima y máxima según horarios abiertos del salón
+  const salonHours = (tenant?.workingHours || []).filter((h: any) => h.isOpen && !h.staffId);
+  const minHour = salonHours.length > 0
+    ? Math.min(...salonHours.map((h: any) => parseInt(h.openTime.split(":")[0])))
+    : 7;
+  const maxHour = salonHours.length > 0
+    ? Math.max(...salonHours.map((h: any) => parseInt(h.closeTime.split(":")[0])))
+    : 21;
+  const HOURS = Array.from({ length: maxHour - minHour + 1 }, (_, i) => i + minHour);
+
   const weekDays = Array.from({ length: 7 }, (_, i) => weekStart.add(i, "day"));
 
   const apptsByDate: Record<string, any[]> = {};
@@ -109,7 +126,7 @@ export default function AppointmentsPage() {
 
   function topPx(time: string) {
     const [h, m] = time.split(":").map(Number);
-    return (h - 7) * 60 + m;
+    return (h - minHour) * 60 + m;
   }
 
   return (
