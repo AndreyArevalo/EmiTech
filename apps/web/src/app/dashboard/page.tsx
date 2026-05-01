@@ -1,7 +1,7 @@
 "use client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
-import { dashboardApi, appointmentsApi } from "@/lib/api";
+import { useState } from "react";
+import { dashboardApi, appointmentsApi, tenantApi } from "@/lib/api";
 import { Calendar, Users, CheckCircle, XCircle, Clock, AlertCircle, TrendingUp } from "lucide-react";
 import toast from "react-hot-toast";
 import dayjs from "dayjs";
@@ -58,15 +58,10 @@ export default function DashboardPage() {
     return `${h12}:${String(m).padStart(2, "0")} ${p}`;
   }
 
-  const todayStr = dayjs().format("dddd D [de] MMMM");
+  const { data: tenant } = useQuery({ queryKey: ["tenant-me"], queryFn: tenantApi.me });
+  const salonName = tenant?.name || "";
 
-  const [salonName, setSalonName] = useState("");
-  useEffect(() => {
-    try {
-      const u = JSON.parse(localStorage.getItem("emitech_user") || "{}");
-      setSalonName(u?.tenant?.name || "");
-    } catch {}
-  }, []);
+  const todayStr = dayjs().format("dddd D [de] MMMM");
 
   return (
     <div>
