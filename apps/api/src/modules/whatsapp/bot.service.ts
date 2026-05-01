@@ -272,13 +272,12 @@ async function handleAdminAction(
 
     // Notificar al cliente via Baileys
     if (tenant && baileysSessions.isConnected(tenantId)) {
-      const tpl = tenant.botConfig?.confirmMessage ||
-        "✅ ¡Tu cita fue confirmada! Te esperamos el {fecha} a las {hora}. 🌸";
-      const msg = tpl
-        .replace("{nombre}", appt.client.name || "")
-        .replace("{fecha}", formatDateSpanish(appt.date))
-        .replace("{hora}", formatTime(appt.time))
-        .replace("{servicio}", appt.service.name);
+      const msg =
+        `✅ ¡Tu cita fue confirmada!\n\n` +
+        `💅 ${appt.service.name}\n` +
+        `📅 ${formatDateSpanish(appt.date)}\n` +
+        `🕒 ${formatTime(appt.time)}\n\n` +
+        `¡Te esperamos! 🌸`;
       try {
         await baileysSessions.sendText(tenantId, appt.client.waId || appt.client.phone, msg);
       } catch {}

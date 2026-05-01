@@ -24,6 +24,9 @@ export function Sidebar() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<any>({});
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   // Cargar user solo en cliente
   useEffect(() => {
@@ -137,7 +140,8 @@ export function Sidebar() {
   return (
     <>
       {/* ── TOPBAR MÓVIL ── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3"
+        style={{ display: mounted ? undefined : "none" }}>
         <button
           onClick={() => setOpen(true)}
           className="p-2 rounded-lg text-gray-500 hover:bg-gray-100"
@@ -161,7 +165,13 @@ export function Sidebar() {
       )}
 
       {/* ── SIDEBAR DESKTOP (fijo) ── */}
-      <aside className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col min-h-screen fixed left-0 top-0 z-30">
+      <aside
+        className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 z-30"
+        style={{
+          display: mounted ? "flex" : "none",
+          flexDirection: "column",
+        }}
+      >
         {sidebarContent}
       </aside>
 
