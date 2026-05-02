@@ -275,6 +275,16 @@ export default function AppointmentsPage() {
 
   return (
     <div>
+      <style>{`
+        @media (max-width: 767px) {
+          .cal-desktop     { display: none !important; }
+          .cal-nav-desktop { display: none !important; }
+        }
+        @media (min-width: 768px) {
+          .cal-mobile     { display: none !important; }
+          .cal-nav-mobile { display: none !important; }
+        }
+      `}</style>
       {/* ── Header ──────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div>
@@ -318,7 +328,7 @@ export default function AppointmentsPage() {
 
           {/* Navegación MÓVIL — 3 días (oculto en desktop) */}
           {view === "week" && (
-            <div className="flex md:hidden items-center gap-2">
+            <div className="cal-nav-mobile flex items-center gap-2">
               <button
                 onClick={() => setMobileStart(d => d.subtract(3, "day"))}
                 className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
@@ -345,7 +355,7 @@ export default function AppointmentsPage() {
 
           {/* Navegación DESKTOP — semana (oculto en móvil) */}
           {view === "week" && (
-            <div className="hidden md:flex items-center gap-2">
+            <div className="cal-nav-desktop flex items-center gap-2">
               <button
                 onClick={() => setWeekStart(w => w.subtract(1, "week"))}
                 className="p-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors"
@@ -438,7 +448,7 @@ export default function AppointmentsPage() {
           ) : (
             <>
               {/* MÓVIL: 3 días */}
-              <div className="md:hidden">
+              <div className="cal-mobile">
                 <CalendarGrid
                   days={mobileDays}
                   apptsByDate={mobileApptsByDate}
@@ -450,7 +460,7 @@ export default function AppointmentsPage() {
               </div>
 
               {/* DESKTOP: semana completa */}
-              <div className="hidden md:block">
+              <div className="cal-desktop">
                 <CalendarGrid
                   days={weekDays}
                   apptsByDate={weekApptsByDate}
